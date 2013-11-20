@@ -33,5 +33,9 @@ MapSphere.Geography.LngLatElev = MapSphere.Geography.LngLat.extend({
     alt: function () {
 
         return this._altitude;
+    },
+
+    elev: function () {
+        return this.alt();
     }
 });

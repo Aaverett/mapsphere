@@ -75,6 +75,11 @@
         $("#outspan").text(t);
     },
 
+    mouseScroll: function(args)
+    {
+        
+    },
+
     updateCameraPosition: function () {
         //In the default implementation, we do nothing.
     }

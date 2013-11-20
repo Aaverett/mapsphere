@@ -26,6 +26,7 @@ MapSphere.MapSphere = MapSphere.UIEventHost.extend({
     cameraController: null,
 
     ambientLight: null,
+    sunLight: null,
 
     doTestGeometry: false,
 
@@ -85,6 +86,7 @@ MapSphere.MapSphere = MapSphere.UIEventHost.extend({
             this.canvas.mouseleave(this.mouseLeave.bind(this));
             this.canvas.click(this.mouseClick.bind(this));
             this.canvas.on('contextmenu', this.suppressContextMenu.bind(this));
+            this.canvas.scroll(this.mouseScroll.bind(this));
 
         }
 
@@ -138,9 +140,9 @@ MapSphere.MapSphere = MapSphere.UIEventHost.extend({
 
         //For testing purposes, it's nice to have some simple geometry that can be added to the scene.
         if (this.doTestGeometry) {
-            var cube = new THREE.CubeGeometry(100000, 100000, 100000, 2, 2);
+            var cube = new THREE.SphereGeometry(this.ellipsoid.getEquatorialRadius(), 36, 36);
 
-            var material = new THREE.MeshBasicMaterial({ color: 0x66ff00 });
+            var material = new THREE.MeshLambertMaterial({ color: 0x66ff00});
 
             var mesh = new THREE.Mesh(cube, material);
 
@@ -148,8 +150,13 @@ MapSphere.MapSphere = MapSphere.UIEventHost.extend({
         }
 
         //Add the ambient light to the scene, so it's not just totally dark.
-        this.ambientLight = new THREE.AmbientLight(0x404040);
+        this.ambientLight = new THREE.AmbientLight(0x050505);
         this.scene.add(this.ambientLight);
+
+        this.sunLight = new THREE.PointLight(0xaaaaff, 10, this.ellipsoid.getEquatorialRadius() * 15);
+        this.sunLight.position.set(this.ellipsoid.getEquatorialRadius() * 10, 0, 0);
+
+        this.scene.add(this.sunLight);
 
     },
 
@@ -193,5 +200,9 @@ MapSphere.MapSphere = MapSphere.UIEventHost.extend({
 
     suppressContextMenu: function (args) {
         return false;
+    },
+
+    mouseScroll: function (args) {
+        this.cameraController.mouseScroll(args);
     }
 })
