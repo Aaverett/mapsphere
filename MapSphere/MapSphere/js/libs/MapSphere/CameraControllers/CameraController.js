@@ -38,21 +38,25 @@
 
         if (this.lastMouseX == null) {
             canDoDelta = false;
-            this.lastMouseX = args.offsetX;
+            this.lastMouseX = args.clientX;
         }
 
         if (this.lastMouseY == null) {
             canDoDelta = false;
-            this.lastMouseY = args.offsetY;
+            this.lastMouseY = args.clientY;
         }
 
-        var deltaX = args.offsetX - this.lastMouseX;
-        var deltaY = args.offsetY - this.lastMouseY;
+        var deltaX = args.clientX - this.lastMouseX;
+        var deltaY = args.clientY - this.lastMouseY;
 
         this.mouseMoved(deltaX, deltaY);
 
-        this.lastMouseX = args.offsetX;
-        this.lastMouseY = args.offsetY;
+        this.lastMouseX = args.clientX;
+        this.lastMouseY = args.clientY;
+    },
+
+    mouseScroll: function(event, delta, deltaX, deltaY) {
+        this.mouseScrolled(delta); 
     },
 
     mouseMoved: function (x, y) {
@@ -61,23 +65,11 @@
 
     mouseButtonStateChanged: function () {
         //This default implementation doesn't do anything with this.
-
-
-        var t = "";
-
-        for (var i = 0; i < this.mouseButtonState.length; i++) {
-            if (this.mouseButtonState[i]) t += "down";
-            else t += "up";
-
-            if (i + 1 < this.mouseButtonState.length) t += ", ";
-        }
-
-        $("#outspan").text(t);
     },
 
-    mouseScroll: function(args)
+    mouseScrolled: function(delta)
     {
-        
+        //The default implementation doesn't actually do anything with the event.
     },
 
     updateCameraPosition: function () {

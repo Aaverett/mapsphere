@@ -86,7 +86,7 @@ MapSphere.MapSphere = MapSphere.UIEventHost.extend({
             this.canvas.mouseleave(this.mouseLeave.bind(this));
             this.canvas.click(this.mouseClick.bind(this));
             this.canvas.on('contextmenu', this.suppressContextMenu.bind(this));
-            this.canvas.scroll(this.mouseScroll.bind(this));
+            this.canvas.mousewheel(this.mouseScroll.bind(this));
 
         }
 

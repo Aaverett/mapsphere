@@ -12,6 +12,8 @@ MapSphere.CameraControllers.OrbitCameraController = MapSphere.CameraControllers.
     cameraLocation: null,
     cameraAltitude: 5000000,
 
+    zoomSteps: 100,
+
     init: function (camera, options) {
         this._super(camera);
 
@@ -26,6 +28,11 @@ MapSphere.CameraControllers.OrbitCameraController = MapSphere.CameraControllers.
             this.cameraLocation = option.cameraLocation;
         }
         else this.cameraLocation = new MapSphere.Geography.LngLatElev(0, 0, this.cameraAltitude);
+
+        if (MapSphere.notNullNotUndef(options.zoomSteps))
+        {
+            this.zoomSteps = options.zoomSteps;
+        }
 
         this.panToLngLatElev(this.cameraLocation);
     },
@@ -75,15 +82,12 @@ MapSphere.CameraControllers.OrbitCameraController = MapSphere.CameraControllers.
 
     panToLngLatElev: function(lngLatElev)
     {
-        this.panToCoords(lngLatElev.lng(), lngLatElev.lat(), lngLatElev.elev());
-    },
-
-
-    panToCoords: function(lon, lat, alt)
-    {
         //Set our official location as the new set of coords/altitude
-        this.cameraLocation = new MapSphere.Geography.LngLat(lon, lat);
-        this.cameraAltitude = alt;
+        this.cameraLocation = lngLatElev; // new MapSphere.Geography.LngLatElev(lon, lat, alt);
+
+        var lat = this.cameraLocation.lat();
+        var lon = this.cameraLocation.lng();
+        var alt = this.cameraLocation.elev();
 
         var radius = this.ellipsoid.getPlanetRadiusAtLatitude(lat);
 
@@ -115,18 +119,47 @@ MapSphere.CameraControllers.OrbitCameraController = MapSphere.CameraControllers.
 
         var quaternion3 = quaternion2.multiply(quaternion1); //Combine the two rotations.  Note that this isn't commutative, so doing it the other way gives wacky results.
 
-        //var quaternion4 = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1, 0, 0), MapSphere.degToRad(this.elevation));
-
-        //var quaternion5 = quaternion4.multiply(quaternion3); //Apply the elevation to the camera's orientation.
-
-        //var quaternion6 = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), MapSphere.degToRad(this.azimuth));
-
-        //var quaternion7 = quaternion6.multiply(quaternion5);
 
         //this.camera.rotation.setFromQuaternion(quaternion7); //Set the camera's euler rotation from our quaternion.
         this.camera.rotation.setFromQuaternion(quaternion3); //Set the camera's euler rotation from our quaternion.
 
         //this.cameraDoneMoving();
+
+        //this.panToCoords(lngLatElev.lng(), lngLatElev.lat(), lngLatElev.elev());
+    },
+
+    panToCoords: function(lng, lat, elev)
+    {
+        var lle = new MapSphere.Geography.LngLatElev(lng, lat, elev);
+
+        this.panToLngLatElev(lle);
+    },
+
+    mouseScrolled: function(delta)
+    {
+        //The delta value is inverted for our purposes, so we'll flip it over first.
+        var trueDelta = -1.0 * delta;
+
+        var newAltitude = this.getNewAltitude(trueDelta);
+
+        //Bounds check and correction
+        if (newAltitude < this.minimumAltitude) {
+            newAltitude = this.minimumAltitude;
+        }
+
+        if (newAltitude > this.maximumAltitude) {
+            newAltitude = this.maximumAltitude;
+        }
+
+        var newLLE = new MapSphere.Geography.LngLatElev(this.cameraLocation.lng(), this.cameraLocation.lat(), this.cameraLocation.elev());
+        this.panToLngLatElev(newLLE);
+    },
+
+    getNewAltitude: function (delta) {
+
+        var newAltitude = Math.pow(this.cameraLocation.elev(),  1 + (delta * (1 / this.zoomSteps)));
+
+        return newAltitude;
 
     }
 });
