@@ -1,6 +1,8 @@
 ﻿//MapSphere.js
 //This is the main file for MapSphere, a library for rendering geographic information in three dimensions, in a manner conceptually similar to Google Earth.
 
+//While there isn't any code here that's copied and pasted from OpenLayers, it's probably notable that I'm shamelessly borrowing some of the design patterns.
+
 //Dependencies
 //three.js
 //Jquery ~1.10
@@ -11,21 +13,29 @@ window.MapSphere = {
     scriptBasePath: "js/libs/MapSphere/"
 };
 
-//This is the set of scripts that will need to be loaded.
+//This is the set of scripts that will need to be loaded.  I'm borrowing this idea from OpenLayers
 MapSphere.scriptFiles =
     [
         "Base/ClassInheritance.js",
         "Base/UIEventHost.js",
         "Base/Funcs.js",
+        "Math/Ellipsoid.js",
+        "CameraControllers/CameraController.js",
+        "CameraControllers/OrbitCameraController.js",
+        "Geography/LngLat.js",
         "MapSphere/MapSphere.js"
     ];
 
+//Create namespaces within MapSphere
+MapSphere.Math = {};
+MapSphere.CameraControllers = {};
+MapSphere.Geography = {};
+
 (function () {
-    
+
     var scriptTags = new Array();
 
-    for(var i=0; i < MapSphere.scriptFiles.length; i++)
-    {
+    for (var i = 0; i < MapSphere.scriptFiles.length; i++) {
         //Compose a script tag for each file.
         var scriptTag = "<script language=\"javascript\" type=\"text/javascript\" src=\"" + MapSphere.scriptBasePath + MapSphere.scriptFiles[i] + "\"></script>";
 

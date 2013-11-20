@@ -1,26 +1,23 @@
 ﻿<!DOCTYPE html>
-<html xmlns="http://www.w3.org/1999/xhtml">
+<html>
 <head>
     <title></title>
+
+    <!-- The JQuery UI stylesheet -->
+    <link rel="Stylesheet" type="text/css" href="css/ui-lightness/jquery-ui-1.10.3.custom.css" />
+
     <script language="javascript" type="text/javascript" src="js/libs/JQuery/jquery-1.10.2.min.js"></script>
     <script language="javascript" type="text/javascript" src="js/libs/JQuery/jquery-ui-1.10.3.custom.min.js"></script>
-    <script language="javascript" type="text/javascript" src="js/libs/OpenLayers.js"></script>
-
+    <script language="javascript" type="text/javascript" src="js/libs/ThreeJS/three.min.js"></script>
     <script language="javascript" type="text/javascript" src="js/libs/MapSphere/MapSphere.js"></script>
-
-    <link rel="stylesheet" href="/assets/OpenLayers/theme/default/style.css" type="text/css" />
 
     <script language="javascript" type="text/javascript">
         var map, layer, ms;
 
-        function doInit()
-        {
-            ms = new MapSphere.MapSphere($("#map"));
-        }
+        function doInit() {
+            var options = { doTestGeometry: true };
 
-        function requestComplete(xhr, status)
-        {
-            
+            ms = new MapSphere.MapSphere($("#map"), options);
         }
 
         //Run the initialization routine 
@@ -29,7 +26,9 @@
     </script>
 </head>
 <body>
-    <a href="#" onclick="doInit(); return false;">Click here</a>
-    <div id="map" style="width: 800px; height: 600px;"></div>
+    <h1>MapSphere Test Page</h1>
+    <p>This demonstrates a simple MapSphere scene.</p>
+    <div id="map" style="width: 1024px; height: 768px; border: 1px solid black;"></div>
+    <span id="outspan"></span>
 </body>
 </html>

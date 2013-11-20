@@ -3,7 +3,7 @@
 // This describes an ellipsoid that (very) roughly models the shape of the earth.
 //It accepts arguments that could conceivably allow it to model the shape of another similarly ellipsoidal planet.
 
-MapSphere.Math.Ellipsoid = Class.extend({
+MapSphere.Math.Ellipsoid = MapSphere.Class.extend({
 
     equatorialRadius: 6378137,
     polarRadius: 6356752.3142,
@@ -30,7 +30,7 @@ MapSphere.Math.Ellipsoid = Class.extend({
     //http://www.mathworks.com/help/aeroblks/radiusatgeocentriclatitude.html
     getPlanetRadiusAtLatitude: function (lat) {
         var rad;
-        var latRadians = Utils.degToRad(lat);
+        var latRadians = MapSphere.degToRad(lat);
 
         var f = 1 / this.inverseFlattening;
 
@@ -47,5 +47,39 @@ MapSphere.Math.Ellipsoid = Class.extend({
 
     getEquatorialRadius: function () {
         return this.equatorialRadius;
+    },
+
+    toCartesianWithLngLat: function (lngLat) {
+        var lle = new MapSphere.Geography.LngLatElev(lngLat.lng(), lngLat.lat(), 0);
+
+        return this.toCartesianWithLngLatElev();
+    },
+
+    toCartesianWithLngLatElev: function (lngLatElev) {
+        var radius = this.getPlanetRadiusAtLatitude(lngLatElev.lat());
+
+        var pX, pY, pZ;
+
+        pZ = Math.sin(MapSphere.degToRad(lngLatElev.lat()));
+        r2 = Math.cos(MapSphere.degToRad(lngLatElev.lat()));
+
+        pX = r2 * Math.cos(MapSphere.degToRad(lngLatElev.lng()));
+        pY = r2 * Math.sin(MapSphere.degToRad(lngLatElev.lng()));
+
+        var gX, gY, gZ;
+        var cX, cY, cZ;
+
+        gX = radius * pX;
+        gY = radius * pY;
+        gZ = radius * pZ;
+
+        cX = (radius + lngLatElev.lat()) * pX;
+        cY = (radius + lngLatElev.lat()) * pY;
+        cZ = (radius + lngLatElev.lat()) * pZ;
+
+        var vec3Pos = new THREE.Vector3(cX, cY, cZ);
+
+        return vec3Pos;
     }
+
 });
