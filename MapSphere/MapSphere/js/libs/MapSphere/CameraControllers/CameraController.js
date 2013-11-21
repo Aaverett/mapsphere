@@ -55,7 +55,7 @@
         this.lastMouseY = args.clientY;
     },
 
-    mouseScroll: function(event, delta, deltaX, deltaY) {
+    mouseScroll: function(delta) {
         this.mouseScrolled(delta); 
     },
 

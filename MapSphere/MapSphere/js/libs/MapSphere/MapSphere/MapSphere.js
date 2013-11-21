@@ -202,7 +202,7 @@ MapSphere.MapSphere = MapSphere.UIEventHost.extend({
         return false;
     },
 
-    mouseScroll: function (args) {
-        this.cameraController.mouseScroll(args);
+    mouseScroll: function (event, delta, deltaX, deltaY) {
+        this.cameraController.mouseScroll(delta);
     }
 })

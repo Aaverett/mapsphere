@@ -14,13 +14,15 @@ MapSphere.CameraControllers.OrbitCameraController = MapSphere.CameraControllers.
 
     zoomSteps: 100,
 
+    allow360Pan: false,
+
     init: function (camera, options) {
         this._super(camera);
 
         this.ellipsoid = options.ellipsoid;
 
         //Initialize our altitude and its upper and lower bounds.
-        this.minimumAltitude = this.ellipsoid.getEquatorialRadius() - (this.ellipsoid.getEquatorialRadius() * 0.1);
+        this.minimumAltitude =  -1.0 * (this.ellipsoid.getEquatorialRadius() * 0.1);
         this.maximumAltitude = this.ellipsoid.getEquatorialRadius() * 2;
         this.cameraAltitude = this.minimumAltitude + ((this.maximumAltitude - this.minimumAltitude) / 2)
 
@@ -33,6 +35,8 @@ MapSphere.CameraControllers.OrbitCameraController = MapSphere.CameraControllers.
         {
             this.zoomSteps = options.zoomSteps;
         }
+
+        if (options.allow360Pan) this.allow360Pan = true;
 
         this.panToLngLatElev(this.cameraLocation);
     },
@@ -71,11 +75,12 @@ MapSphere.CameraControllers.OrbitCameraController = MapSphere.CameraControllers.
 
         var curX = this.cameraLocation.lng();
         var curY = this.cameraLocation.lat();
+        var curElev = this.cameraLocation.elev();
 
         var newX = curX + deltaDegX;
         var newY = curY + deltaDegY;
 
-        this.panToCoords(newX, newY, this.cameraAltitude);
+        this.panToCoords(newX, newY, curElev);
 
         $("#outspan2").text(newX + " " + newY);
     },
@@ -151,7 +156,7 @@ MapSphere.CameraControllers.OrbitCameraController = MapSphere.CameraControllers.
             newAltitude = this.maximumAltitude;
         }
 
-        var newLLE = new MapSphere.Geography.LngLatElev(this.cameraLocation.lng(), this.cameraLocation.lat(), this.cameraLocation.elev());
+        var newLLE = new MapSphere.Geography.LngLatElev(this.cameraLocation.lng(), this.cameraLocation.lat(), newAltitude);
         this.panToLngLatElev(newLLE);
     },
 
