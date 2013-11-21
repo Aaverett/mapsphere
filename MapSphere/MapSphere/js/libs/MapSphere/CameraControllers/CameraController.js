@@ -74,5 +74,18 @@
 
     updateCameraPosition: function () {
         //In the default implementation, we do nothing.
+    },
+
+    cameraMoved: function () {
+        var args = {
+            extent: this.getCameraVisibleExtent()
+        }
+
+        this.raiseEvent("cameraMoved", args);
+    },
+
+    getCameraVisibleExtent: function () {
+        return null;
     }
+
 });

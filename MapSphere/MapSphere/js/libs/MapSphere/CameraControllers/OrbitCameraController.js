@@ -128,7 +128,7 @@ MapSphere.CameraControllers.OrbitCameraController = MapSphere.CameraControllers.
         //this.camera.rotation.setFromQuaternion(quaternion7); //Set the camera's euler rotation from our quaternion.
         this.camera.rotation.setFromQuaternion(quaternion3); //Set the camera's euler rotation from our quaternion.
 
-        //this.cameraDoneMoving();
+        this.cameraMoved();
 
         //this.panToCoords(lngLatElev.lng(), lngLatElev.lat(), lngLatElev.elev());
     },

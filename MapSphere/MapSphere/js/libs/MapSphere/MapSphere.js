@@ -23,6 +23,10 @@ MapSphere.scriptFiles =
         "CameraControllers/CameraController.js",
         "CameraControllers/OrbitCameraController.js",
         "Geography/LngLat.js",
+        "Geography/Envelope.js",
+        "Layers/Layer.js",
+        "Basic/EllipsoidLayer.js",
+        "Layers/ArcGISRESTLayer.js",
         "MapSphere/MapSphere.js"
     ];
 
@@ -30,6 +34,7 @@ MapSphere.scriptFiles =
 MapSphere.Math = {};
 MapSphere.CameraControllers = {};
 MapSphere.Geography = {};
+MapSphere.Layers = {};
 
 (function () {
 

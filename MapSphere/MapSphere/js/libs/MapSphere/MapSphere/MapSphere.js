@@ -30,6 +30,8 @@ MapSphere.MapSphere = MapSphere.UIEventHost.extend({
 
     doTestGeometry: false,
 
+    layers: new Array(),
+
     //Constructor
     init: function (targetElement, options) {
         if (MapSphere.notNullNotUndef(options)) {
@@ -52,6 +54,16 @@ MapSphere.MapSphere = MapSphere.UIEventHost.extend({
             //Did they request the test geometry?
             if (MapSphere.notNullNotUndef(options.doTestGeometry)) {
                 this.doTestGeometry = options.doTestGeometry;
+            }
+
+            //Did they pass in a layer var?
+            if(MapSphere.notNullNotUndef(options.layers))
+            {
+                //Is it an array?
+                if(options.layers instanceof Array)
+                {
+                    this.layers = options.layers;
+                }
             }
         }
 
@@ -96,6 +108,9 @@ MapSphere.MapSphere = MapSphere.UIEventHost.extend({
         //Now, initialize the 3D scene.
         this.initScene();
 
+        //Init existing layers.
+        this.initLayers();
+
         //Start the render loop.
         this.renderScene();
     },
@@ -130,7 +145,7 @@ MapSphere.MapSphere = MapSphere.UIEventHost.extend({
                 ellipsoid: this.ellipsoid
             };
 
-            this.cameraController = new MapSphere.CameraControllers.OrbitCameraController(this.camera, opts);
+            this.setCameraController(new MapSphere.CameraControllers.OrbitCameraController(this.camera, opts));
         }
 
         this.scene.add(this.camera);
@@ -142,7 +157,7 @@ MapSphere.MapSphere = MapSphere.UIEventHost.extend({
         if (this.doTestGeometry) {
             var cube = new THREE.SphereGeometry(this.ellipsoid.getEquatorialRadius(), 36, 36);
 
-            var material = new THREE.MeshLambertMaterial({ color: 0x66ff00});
+            var material = new THREE.MeshBasicMaterial({ color: 0x66ff00});
 
             var mesh = new THREE.Mesh(cube, material);
 
@@ -150,19 +165,46 @@ MapSphere.MapSphere = MapSphere.UIEventHost.extend({
         }
 
         //Add the ambient light to the scene, so it's not just totally dark.
-        this.ambientLight = new THREE.AmbientLight(0x050505);
+        this.ambientLight = new THREE.AmbientLight(0xaaaaaa);
         this.scene.add(this.ambientLight);
 
-        this.sunLight = new THREE.PointLight(0xaaaaff, 10, this.ellipsoid.getEquatorialRadius() * 15);
+        /*this.sunLight = new THREE.PointLight(0xffffff, 3, this.ellipsoid.getEquatorialRadius() * 15);
         this.sunLight.position.set(this.ellipsoid.getEquatorialRadius() * 10, 0, 0);
 
-        this.scene.add(this.sunLight);
+        this.scene.add(this.sunLight);*/
 
+    },
+
+    //This initializes all of the layers presently in the layers array.
+    initLayers: function () {
+
+        for (var i = 0; i < this.layers.length; i++) {
+            
+        }
     },
 
     renderScene: function () {
         requestAnimationFrame(this.renderScene.bind(this));
         this.renderer.render(this.scene, this.camera);
+    },
+
+    setCameraController: function(newCameraController) {
+
+        //Actually set the camera controller.
+        this.cameraController = newCameraController;
+
+        //Hook up to the controller's events.
+        this.cameraController.addEventListener("cameraMoved", this.handleCameraMoved.bind(this), null);
+    },
+
+    handleCameraMoved: function(args) {
+        
+        //Alert the layers that the visible extent changed.
+        for(var i=0; i < this.layers.length; i++)
+        {
+            this.layers[i].setVisibleExtent(args.extent);
+        }
+
     },
 
     resize: function (width, height) {
@@ -204,5 +246,19 @@ MapSphere.MapSphere = MapSphere.UIEventHost.extend({
 
     mouseScroll: function (event, delta, deltaX, deltaY) {
         this.cameraController.mouseScroll(delta);
+    },
+    //End of mouse event handlers
+
+    //Layer maninpulation
+    addLayer: function(layer)
+    {
+
+    },
+
+    removeLayer: function()
+    {
+
     }
+    //End of layer manipulation
+
 })
