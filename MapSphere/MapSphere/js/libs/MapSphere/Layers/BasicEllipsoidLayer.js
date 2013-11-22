@@ -4,28 +4,33 @@
 
 MapSphere.Layers.BasicEllipsoidLayer = MapSphere.Layers.Layer.extend({
 
-    _color1: null,
-    _color2: null,
-
     init: function (options) {
         this._super(options);
 
-        //Fetch the colors from the options, if applicable.
-        if (MapSphere.notNullOrUndef(options.color1)) {
-            if (options.color1 instanceof THREE.Color) {
-                this._color1 = options.color1;
+        //Make sure we actually had options passed in.
+        if (MapSphere.notNullNotUndef(options)) {
+            //Fetch the colors from the options, if applicable.
+            if (MapSphere.notNullNotUndef(options.color1)) {
+                if (options.color1 instanceof THREE.Color) {
+                    var color = options.color1;
+                    this._vertexColors.push(color);
+                }
+                else {
+                    var color = new THREE.Color(options.color1);
+                    this._vertexColors.push(color);
+                }
             }
-            else {
-                this._color1 = new THREE.Color(options.color1);
-            }
-        }
 
-        if (MapSphere.notNullOrUndef(options.color2)) {
-            if (options.color2 instanceof THREE.Color) {
-                this._color2 = options.color1;
-            }
-            else {
-                this._color2 = new THREE.Color(options.color2);
+            if (MapSphere.notNullNotUndef(options.color2)) {
+                var color;
+                if (options.color2 instanceof THREE.Color) {
+                    var color = options.color2;
+                    this._vertexColors.push(color);
+                }
+                else {
+                    color = new THREE.Color(options.color2);
+                    this._vertexColors.push(color);
+                }
             }
         }
 
@@ -51,6 +56,6 @@ MapSphere.Layers.BasicEllipsoidLayer = MapSphere.Layers.Layer.extend({
     refreshGeometry: function()
     {
         //First, generate the geometry for the given extent.
-        var geom = this.generateEllipsoidGeometryForVisibleExtent();
+        var geom = this.generateEllipseGeometryForVisibleExtent();
     }
 });

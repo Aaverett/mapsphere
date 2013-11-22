@@ -25,7 +25,7 @@ MapSphere.scriptFiles =
         "Geography/LngLat.js",
         "Geography/Envelope.js",
         "Layers/Layer.js",
-        "Basic/EllipsoidLayer.js",
+        "Layers/BasicEllipsoidLayer.js",
         "Layers/ArcGISRESTLayer.js",
         "MapSphere/MapSphere.js"
     ];

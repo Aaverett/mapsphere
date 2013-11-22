@@ -16,7 +16,7 @@
         var map, layer, ms;
 
         function doInit() {
-            var options = { doTestGeometry: true };
+            var options = { doTestGeometry: false };
 
             ms = new MapSphere.MapSphere($("#map"), options);
 
@@ -24,7 +24,10 @@
 
             };
 
-            var basicEllipsoidLayer = new MapSphere.Layers.BasicEllipsoidLayer();
+            var basicEllipsoidLayer = new MapSphere.Layers.BasicEllipsoidLayer(belLayerOpts);
+
+            ms.addLayer(basicEllipsoidLayer);
+
         }
 
         //Run the initialization routine 

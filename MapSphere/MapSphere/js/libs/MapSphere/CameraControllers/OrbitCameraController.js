@@ -166,5 +166,44 @@ MapSphere.CameraControllers.OrbitCameraController = MapSphere.CameraControllers.
 
         return newAltitude;
 
+    },
+
+    //Override the useless default non-function.
+    getCameraVisibleExtent: function()
+    {
+        var extent = {
+            maxx: this.cameraLocation.lng(),
+            minx: this.cameraLocation.lng(),
+            maxy: this.cameraLocation.lat(),
+            miny: this.cameraLocation.lat()
+        };
+
+        var planetRadius = this.ellipsoid.getEquatorialRadius();
+
+        var orbitRadius = planetRadius + this.cameraLocation.elev();
+
+        //This is a quick and dirty method of doing this, but should work for now.  
+        //Redo this later, if needed.
+        var fovH = this.camera.fov;
+        var fovV = fovH / this.camera.aspect;
+
+        //This can sometimes be NaN.
+        if (isNaN(fovH)) {
+            fovH = fovV * 1.3333; //Give it a sane and reasonable value
+        }
+
+        var halfAngleV = fovV / 2;
+        var halfAngleH = fovH / 2;
+        var hAVRad = MapSphere.degToRad(halfAngleV);
+        var hAHRad = MapSphere.degToRad(halfAngleH);
+
+        var maxHFovDist = Math.sin(halfAngleH) * orbitRadius;
+        var maxVFovDist = Math.sin(halfAngleV) * orbitRadius;
+
+        //If the maximum distance is greater than the planet's radius, that means that the 
+        if(maxHFovDist > planetRadius)
+        {
+
+        }
     }
 });

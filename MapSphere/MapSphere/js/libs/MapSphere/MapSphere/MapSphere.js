@@ -178,9 +178,16 @@ MapSphere.MapSphere = MapSphere.UIEventHost.extend({
     //This initializes all of the layers presently in the layers array.
     initLayers: function () {
 
+        //Tell each layer to refresh its geometry.
         for (var i = 0; i < this.layers.length; i++) {
-            
+            this.layers[i].addEventListener("geometryChanged", this.handleLayerGeometryChanged.bind(this));
+
+            this.layers[i].refreshGeometry();
         }
+    },
+
+    initLayer: function () {
+
     },
 
     renderScene: function () {
@@ -252,13 +259,24 @@ MapSphere.MapSphere = MapSphere.UIEventHost.extend({
     //Layer maninpulation
     addLayer: function(layer)
     {
-
+        layer.addEventListener("geometryChanged", this.handleLayerGeometryChanged.bind(this));
+        this.layers.push(layer);
+        layer.setVisibleExtent(this.cameraController.getCameraVisibleExtent());
+        layer.refreshGeometry();
     },
 
     removeLayer: function()
     {
 
-    }
+    },
     //End of layer manipulation
 
+    //Event handlers for layer events
+    handleLayerGeometryChanged: function(args) {
+        if(args.allNewGeometry)
+        {
+            this.scene.remove(args.sender.getGeometry());
+        }
+    }
+    //end of layer event handlers
 })
