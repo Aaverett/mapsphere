@@ -27,3 +27,14 @@ MapSphere.radToDeg = function (rad) {
 
     return deg;
 }
+
+MapSphere.simplestVertexShader = "varying vec2 vUv;\r\n" +
+    "varying vec3 vNormal;\r\n" +
+    "varying vec3 vViewPosition;\r\n" +
+    "void main() {\r\n" +
+    "    vec4 mvPosition = modelViewMatrix * vec4( position, 1.0 );\r\n" +
+    "    vUv = uv;\r\n" +
+    "    vNormal = normalize( normalMatrix * normal );\r\n" +
+    "    vViewPosition = -mvPosition.xyz;\r\n" +
+    "    gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );\r\n" +
+    "}\r\n";

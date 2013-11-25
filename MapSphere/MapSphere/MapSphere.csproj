@@ -61,6 +61,7 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="assets\bluemarble.jpg" />
+    <Content Include="assets\testmpa.png" />
     <Content Include="css\ui-lightness\images\animated-overlay.gif" />
     <Content Include="css\ui-lightness\images\ui-bg_diagonals-thick_18_b81900_40x40.png" />
     <Content Include="css\ui-lightness\images\ui-bg_diagonals-thick_20_666666_40x40.png" />

@@ -97,6 +97,11 @@ MapSphere.Layers.Layer = MapSphere.UIEventHost.extend({
             color: {
                 itemSize: 3,
                 array: new Float32Array(triangles * 3 * 3),
+            },
+
+            uv: {
+                itemSize: 2,
+                array: new Float32Array(triangles * 3 * 2)
             }
         };
 
@@ -118,15 +123,29 @@ MapSphere.Layers.Layer = MapSphere.UIEventHost.extend({
         var positions = this._geometry.attributes.position.array;
         var normals = this._geometry.attributes.normal.array;
         var colors = this._geometry.attributes.color.array;
+        var uvs = this._geometry.attributes.uv.array;
 
         var theta = 0;
         var rhoIndex = 0;
         var thetaIndex;
 
+        var theta0Deg = this._visibleExtent.getSW().lng();
+        var rho0Deg = this._visibleExtent.getNE().lat();
+        var thetaPrimeDeg = this._visibleExtent.getNE().lng();
+        var rhoPrimeDeg = this._visibleExtent.getSW().lat();
+
+        var theta0 = MapSphere.degToRad(theta0Deg);
+        var rho0 = MapSphere.degToRad(rho0Deg);
+        var thetaPrime = MapSphere.degToRad(thetaPrimeDeg);
+        var rhoPrime = MapSphere.degToRad(rhoPrimeDeg);
+
+        var thetaRange = thetaPrime - theta0;
+        var rhoRange = rho0 - rhoPrime;
+
         //This goes all the way around, so we use 2 pi.
-        var thetaStep = (2 * Math.PI) / meridians;
+        var thetaStep = thetaRange / meridians;
         //This is only half of the circle (north pole to south pole) so we use only 1 times pi.
-        var rhoStep = Math.PI / parallels;
+        var rhoStep = rhoRange / parallels;
         var pointsIndex = 0;
 
         //We don't actually do the last rho step, as that's a single point at the bottom.
@@ -134,8 +153,8 @@ MapSphere.Layers.Layer = MapSphere.UIEventHost.extend({
 
             thetaIndex = 0;
 
-            var rho = (Math.PI / 2) - (rhoIndex * rhoStep);
-            var rho1 = (Math.PI / 2) - ((rhoIndex + 1) * rhoStep);
+            var rho = rho0 - (rhoIndex * rhoStep);
+            var rho1 = rho0 - ((rhoIndex + 1) * rhoStep);
 
             //The conical top and bottom portions have triangles instead of two-triangle trapezoids.
             if (rhoIndex == 0 || rhoIndex + 1 == parallels) {
@@ -149,11 +168,13 @@ MapSphere.Layers.Layer = MapSphere.UIEventHost.extend({
                 if (rhoIndex == 0) {
                     //v0 = this.toCartesian(0, rho, 0, false);
                     v0 = this._ellipsoid.toCartesianWithLngLatElevValues(0, rho, 0, false);
+                    this.addTextureCoordsForVertex(uvs, ((pointsIndex / 3) * 2), rho, 0, rho0, theta0, rhoPrime, thetaPrime);
                 }
                 else {
                     //south pole
                     //v0 = this.toCartesian(0, rho1, 0, false);
                     v0 = this._ellipsoid.toCartesianWithLngLatElevValues(0, rho1, 0, false);
+                    this.addTextureCoordsForVertex(uvs, ((pointsIndex / 3) * 2), rho1, 0, rho0, theta0, rhoPrime, thetaPrime);
                 }
 
                 //Convert to cartesian coords.
@@ -167,6 +188,8 @@ MapSphere.Layers.Layer = MapSphere.UIEventHost.extend({
                     if (rhoIndex == 0) {
                         v2 = this._ellipsoid.toCartesianWithLngLatElevValues(theta, rho1, 0, false);
                         v1 = this._ellipsoid.toCartesianWithLngLatElevValues(theta1, rho1, 0, false);
+                        this.addTextureCoordsForVertex(uvs, ((pointsIndex / 3) * 2) + 0, rho, theta, rho0, theta0, rhoPrime, thetaPrime);
+                        this.addTextureCoordsForVertex(uvs, ((pointsIndex / 3) * 2) + 2, rho1, theta1, rho0, theta0, rhoPrime, thetaPrime);
                         //v2 = this.toCartesian(theta, rho1, 0, false);
                         //v1 = this.toCartesian(theta1, rho1, 0, false);
                     }
@@ -174,6 +197,8 @@ MapSphere.Layers.Layer = MapSphere.UIEventHost.extend({
                         //Otherwise, assume south pole
                         v2 = this._ellipsoid.toCartesianWithLngLatElevValues(theta1, rho, 0, false);
                         v1 = this._ellipsoid.toCartesianWithLngLatElevValues(theta, rho, 0, false);
+                        this.addTextureCoordsForVertex(uvs, ((pointsIndex  / 3) * 2) + 0, rho, theta1, rho0, theta0, rhoPrime, thetaPrime);
+                        this.addTextureCoordsForVertex(uvs, ((pointsIndex  / 3) * 2) + 2, rho, theta, rho0, theta0, rhoPrime, thetaPrime);
                         //v2 = this.toCartesian(theta1, rho, 0, false);
                         //1 = this.toCartesian(theta, rho, 0, false);
                     }
@@ -189,7 +214,6 @@ MapSphere.Layers.Layer = MapSphere.UIEventHost.extend({
                         g = 0.6;
                         b = 0.6;
                     }
-
 
                     this.addTriangle(positions, normals, colors, v0, v2, v1, pointsIndex, r, g, b);
                     pointsIndex += 9;
@@ -223,9 +247,16 @@ MapSphere.Layers.Layer = MapSphere.UIEventHost.extend({
                     v3 = this._ellipsoid.toCartesianWithLngLatElevValues(theta1, rho, 0, false);
 
                     this.addTriangle(positions, normals, colors, v0, v2, v1, pointsIndex, r, g, b);
+                    this.addTextureCoordsForVertex(uvs, ((pointsIndex / 3) * 2) + 0, rho, theta, rho0, theta0, rhoPrime, thetaPrime);
+                    this.addTextureCoordsForVertex(uvs, ((pointsIndex / 3) * 2) + 2, rho1, theta, rho0, theta0, rhoPrime, thetaPrime);
+                    this.addTextureCoordsForVertex(uvs, ((pointsIndex / 3) * 2) + 4, rho1, theta1, rho0, theta0, rhoPrime, thetaPrime);
+
                     pointsIndex += 9;
 
                     this.addTriangle(positions, normals, colors, v0, v1, v3, pointsIndex, r, g, b);
+                    this.addTextureCoordsForVertex(uvs, ((pointsIndex / 3) * 2) + 0, rho, theta, rho0, theta0, rhoPrime, thetaPrime);
+                    this.addTextureCoordsForVertex(uvs, ((pointsIndex / 3) * 2) + 2, rho1, theta1, rho0, theta0, rhoPrime, thetaPrime);
+                    this.addTextureCoordsForVertex(uvs, ((pointsIndex / 3) * 2) + 4, rho, theta1, rho0, theta0, rhoPrime, thetaPrime);
                     pointsIndex += 9;
                 }
             }
@@ -255,6 +286,20 @@ MapSphere.Layers.Layer = MapSphere.UIEventHost.extend({
 
         this._mesh = mesh;
 
+    },
+    
+    addTextureCoordsForVertex: function(uvs, arrayPosition, rho, theta, rho0, theta0, rhoPrime, thetaPrime)
+    {
+        var u, v;
+
+        var totalRangeRho = Math.abs(rhoPrime - rho0);
+        var totalRangeTheta = thetaPrime - theta0;
+
+        u = Math.abs((theta - theta0) / totalRangeTheta);
+        v = 1 - Math.abs((rho - rho0) / totalRangeRho);
+
+        uvs[arrayPosition + 0] = u;
+        uvs[arrayPosition + 1] = v;
     },
 
     //Adds a triangle to the buffer geometry at the given index.
@@ -302,11 +347,45 @@ MapSphere.Layers.Layer = MapSphere.UIEventHost.extend({
         colors[pointsIndex + 8] = b;
     },
 
+    //Updates the material applied to our geometry with custom vertex and fragment shaders
+    //This is done in order to support multiple textures.
     updateShaders: function()
     {
-        var vertShader = this._vertexShaderContents;
-            
+        //This is just a constant string.
+        var vertShader = MapSphere.simplestVertexShader;
+        
+        var textures = new Array();
 
+        //Compose an array of all the textures to be blended.
+        for (var i = 0; i < this._decorations.length; i++)
+        {
+            var dec = this._decorations[i];
+
+            var decTex = dec.getTextures();
+
+            for(var j=0; j < decTex.length; j++)
+            {
+                textures.push(decTex[j]);
+            }
+        }
+
+        var unis = {};
+
+        //Now, compose the unis array.
+        for (var i = 0; i < textures.length; i++)
+        {
+            var texname = "texture" + i;
+
+            var uniData = { type: "t", value: textures[i] };
+
+            unis[texname] = uniData;
+        }
+
+       
+        //Compose the fragment shader
+        var fragShader = this.composeFragmentShader(unis);
+
+        
         this._material = new THREE.ShaderMaterial({
             uniforms: unis,
             attributes: {},
@@ -318,6 +397,37 @@ MapSphere.Layers.Layer = MapSphere.UIEventHost.extend({
         {
             this._mesh.material = this._material;
         }
+    },
+
+    //Composes a fragment shader program as a string and returns it.
+    composeFragmentShader: function(unis)
+    {
+        var fragShader = "";
+
+        for (var k in unis) {
+            var line = "uniform sampler2D " + k + ";\r\n";
+            fragShader += line;
+        }
+
+        fragShader += "varying vec2 vUv;\r\n" +
+            "varying vec3 vNormal;\r\n" +
+            "varying vec3 vViewPosition;\r\n" + 
+            "void main {\r\n";
+
+        for (var k in unis) {
+            fragShader += "vec4 color" + k + " = texture2D( " + k + ", vUv );\r\n";
+        }
+
+        //Something about hacking in a light...
+        fragShader += "vec3 normal = normalize( vNormal );\r\n" + 
+            "vec3 lightDir = normalize( vViewPosition );\r\n" + 
+            "float dotProduct = max( dot( normal, lightDir ), 0.0 ) + 0.2;\r\n";
+        
+            
+
+            gl_FragColor = vec4( mix( tColor.rgb, tColor2.rgb, tColor2.a ), 1.0 ) * dotProduct;
+
+        fragShader += "}\r\n";
     }
 
 });

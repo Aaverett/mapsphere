@@ -43,8 +43,14 @@ MapSphere.Layers.BasicEllipsoidLayer = MapSphere.Layers.Layer.extend({
     },
 
     initMaterial: function () {
+
+        this.updateShaders();
+
+        return;
+
         //Creates a material for our geometry.
         var texture = THREE.ImageUtils.loadTexture("assets/bluemarble.jpg");
+        texture.needsUpdate = true;
         var options = {
             //color: 0xaaaaaa, //this._vertexColors,
             //vertexColors: THREE.VertexColors,

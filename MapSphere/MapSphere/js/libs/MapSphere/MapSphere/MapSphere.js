@@ -162,7 +162,7 @@ MapSphere.MapSphere = MapSphere.UIEventHost.extend({
         if (this.doTestGeometry) {
             var cube = new THREE.SphereGeometry(this.ellipsoid.getEquatorialRadius(), 36, 36);
 
-            var material = new THREE.MeshBasicMaterial({
+            var material = new THREE.MeshLambertMaterial({
                 map: THREE.ImageUtils.loadTexture("assets/bluemarble.jpg")});
 
             var mesh = new THREE.Mesh(cube, material);

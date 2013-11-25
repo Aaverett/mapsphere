@@ -16,18 +16,28 @@
         var map, layer, ms;
 
         function doInit() {
-            var options = { doTestGeometry: false };
+            var options = { doTestGeometry: false};
 
             ms = new MapSphere.MapSphere($("#map"), options);
 
             var stdOptions = {
-                path: "assets/bluemarble.jpg"
+                texturePath: "assets/bluemarble.jpg"
             };
 
-            var std = new MapSphere.Decorations.StaticTextureDecoration(stdOptions);
+            var stdOptions2 = {
+                texturePath: "assets/testmpa.png"
+            };
+
+            var std1 = new MapSphere.Decorations.StaticTextureDecoration(stdOptions);
+            var std2 = new MapSphere.Decorations.StaticTextureDecoration(stdOptions2);
+
+            if (std1 == std2)
+            {
+                alert("what the hell?");
+            }
 
             var belLayerOpts = {
-                decorations: [std]
+                decorations: [std1, std2]
             };
 
             var basicEllipsoidLayer = new MapSphere.Layers.BasicEllipsoidLayer(belLayerOpts);
@@ -39,6 +49,33 @@
         //Run the initialization routine 
         $(document).ready(doInit);
 
+    </script>
+    <script id="vertex_shader" type="x-shader/x-vertex">
+        
+    </script>
+
+    <script id="fragment_shader" type="x-shader/x-fragment">
+        uniform sampler2D texture0;
+        uniform sampler2D texture1;
+
+        varying vec2 vUv;
+        varying vec3 vNormal;
+        varying vec3 vViewPosition;
+
+        void main() {
+
+        vec4 tColor = texture2D( texture0, vUv );
+        vec4 tColor2 = texture2D( texture1, vUv );
+
+        // hack in a fake pointlight at camera location, plus ambient
+        vec3 normal = normalize( vNormal );
+        vec3 lightDir = normalize( vViewPosition );
+
+        float dotProduct = max( dot( normal, lightDir ), 0.0 ) + 0.2;
+
+        gl_FragColor = vec4( mix( tColor.rgb, tColor2.rgb, tColor2.a ), 1.0 ) * dotProduct;
+
+        }
     </script>
 </head>
 <body>
