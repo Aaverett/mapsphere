@@ -34,16 +34,24 @@ MapSphere.Layers.BasicEllipsoidLayer = MapSphere.Layers.Layer.extend({
             }
         }
 
+        if (this._vertexColors.length == 0)
+        {
+            this._vertexColors.push(new THREE.Color(0xaaaaaa));
+        }
+
         this.initMaterial();
     },
 
     initMaterial: function () {
         //Creates a material for our geometry.
+        var texture = THREE.ImageUtils.loadTexture("assets/bluemarble.jpg");
         var options = {
-            color: this._color1,
-            vertexColors: THREE.VertexColors
+            //color: 0xaaaaaa, //this._vertexColors,
+            //vertexColors: THREE.VertexColors,
+            map: texture
         };
         this._material = new THREE.MeshLambertMaterial(options);
+        //this._material.side = THREE.DoubleSided;
     },
 
     setVisibleExtent: function(extent)
@@ -55,7 +63,10 @@ MapSphere.Layers.BasicEllipsoidLayer = MapSphere.Layers.Layer.extend({
 
     refreshGeometry: function()
     {
+        //Do the base class implementation.
+        this._super();
+
         //First, generate the geometry for the given extent.
-        var geom = this.generateEllipseGeometryForVisibleExtent();
+        this.generateEllipseGeometryForVisibleExtent();
     }
 });

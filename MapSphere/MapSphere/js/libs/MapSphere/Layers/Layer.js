@@ -14,7 +14,9 @@ MapSphere.Layers.Layer = MapSphere.UIEventHost.extend({
 
     _triangleCount: 0,
 
-    _vertexColors: null,
+    _vertexColors: new Array(),
+
+    _decorations: new Array(),
 
     init: function (options)
     {
@@ -28,6 +30,12 @@ MapSphere.Layers.Layer = MapSphere.UIEventHost.extend({
             }
             else {
                 this._ellipsoid = new MapSphere.Math.Ellipsoid();
+            }
+
+            //Did the user provide any decorations?
+            if(MapSphere.notNullNotUndef(options.decorations))
+            {
+                this._decorations = options.decorations;
             }
         }
     },
@@ -53,136 +61,203 @@ MapSphere.Layers.Layer = MapSphere.UIEventHost.extend({
 
     refreshGeometry: function()
     {
-        //The default implementation doesn't have any geometry, so we do nothing.
+        for(var i = 0; i < this._decorations.length; i++)
+        {
+            this._decorations[i].refreshContents();
+        }
     },
 
     //This generates a buffer geometry object that matches the ellipsoid at the layer's current extent.  A texture, such as a map image from a map service, could be used
     //to add additional information.
     generateEllipseGeometryForVisibleExtent: function()
     {
-        var parallels = 36;
-        var meridians = 36;
+        var parallels = 72;
+        var meridians = 72;
 
-        //The class triangle count keeps track of how many triangles the layer's geometry has.
-        this._triangleCount = 0;
+        var triangles = (parallels * meridians * 2) - (2 * meridians);
 
-        //This is the number of triangles we're theoretically going to have.
-        var triangleCount = (parallels * meridians * 2)
+        this._geometry = new THREE.BufferGeometry();
 
-        var newGeometry = new THREE.BufferGeometry();
-        
-        newGeometry.attributes = {
+        this._geometry.attributes = {
             index: {
                 itemSize: 1,
-                array: new Uint16Array(triangleCount * 3)
+                array: new Uint16Array(triangles * 3),
             },
 
             position: {
-                itemsize: 3,
-                array: new Float32Array(triangleCount * 3 * 3)
+                itemSize: 3,
+                array: new Float32Array(triangles * 3 * 3),
             },
 
             normal: {
-                itemsize: 3,
-                array: new Float32Array(triangleCount * 3 * 3)
+                itemSize: 3,
+                array: new Float32Array(triangles * 3 * 3),
             },
 
             color: {
-                itemsize: 3,
-                array: new Float32Array(triangleCount * 3 * 3)
+                itemSize: 3,
+                array: new Float32Array(triangles * 3 * 3),
             }
         };
 
-        //Initialize the index
-        var chunksize = 21845;
-        var indices = newGeometry.attributes.index.array;
 
-        for(var i=0; i < indices.length; i++)
-        {
-            var val = i % (3 * chunksize);
+        // break geometry into
+        // chunks of 21,845 triangles (3 unique vertices per triangle)
+        // for indices to fit into 16 bit integer number
+        // floor(2^16 / 3) = 21845
+
+        var chunkSize = 21845;
+
+        var indices = this._geometry.attributes.index.array;
+
+        for (var i = 0; i < indices.length; i++) {
+            var val = i % (3 * chunkSize);
             indices[i] = val;
         }
 
-        var positions = newGeometry.attributes.position.array;
-        var normals = newGeometry.attributes.normal.array;
-        var colors = newGeometry.attributes.color.array;
+        var positions = this._geometry.attributes.position.array;
+        var normals = this._geometry.attributes.normal.array;
+        var colors = this._geometry.attributes.color.array;
 
         var theta = 0;
-        var rho = 0;
+        var rhoIndex = 0;
         var thetaIndex;
 
-        //This is our initial theta...
-        var theta0 = this._visibleExtent.getNE().lng();
-        var thetaPrime = this._visibleExtent.getSW().lng();
-        var rho0 = this._visibleExtent.getNE().lat();
-        var rhoPrime = this._visibleExtent.getSW().lat();
-
-        var thetaRange = thetaPrime - theta0;
-        var rhoRange = rhoPrime - rho0;
-
-        var thetaStep = thetaRange / meridians;
-        var rhoStep = thetaRange / parallels;
+        //This goes all the way around, so we use 2 pi.
+        var thetaStep = (2 * Math.PI) / meridians;
+        //This is only half of the circle (north pole to south pole) so we use only 1 times pi.
+        var rhoStep = Math.PI / parallels;
         var pointsIndex = 0;
 
-        var defaultColor = new THREE.Color(0xaaaaaa);
+        //We don't actually do the last rho step, as that's a single point at the bottom.
+        while (rhoIndex < parallels) {
 
-        theta = theta0;
-        while (rho > rho0)
-        {
-            rho = rhoPrime;
-            while(theta < thetaPrime)
-            {
-                var theta1 = theta + thetaStep;
-                var rho1 = rho + rhoStep;
+            thetaIndex = 0;
+
+            var rho = (Math.PI / 2) - (rhoIndex * rhoStep);
+            var rho1 = (Math.PI / 2) - ((rhoIndex + 1) * rhoStep);
+
+            //The conical top and bottom portions have triangles instead of two-triangle trapezoids.
+            if (rhoIndex == 0 || rhoIndex + 1 == parallels) {
+                
+                var v0, v1, v2;
+
+                var cb = new THREE.Vector3();
+                var ab = new THREE.Vector3();
+
+                //North pole
+                if (rhoIndex == 0) {
+                    //v0 = this.toCartesian(0, rho, 0, false);
+                    v0 = this._ellipsoid.toCartesianWithLngLatElevValues(0, rho, 0, false);
+                }
+                else {
+                    //south pole
+                    //v0 = this.toCartesian(0, rho1, 0, false);
+                    v0 = this._ellipsoid.toCartesianWithLngLatElevValues(0, rho1, 0, false);
+                }
+
+                //Convert to cartesian coords.
+
+
+                for (thetaIndex = 0; thetaIndex < meridians; thetaIndex++) {
+                    theta = thetaIndex * thetaStep;
+                    theta1 = (thetaIndex + 1) * thetaStep;
+
+                    //If it's the first ring (north pole)
+                    if (rhoIndex == 0) {
+                        v2 = this._ellipsoid.toCartesianWithLngLatElevValues(theta, rho1, 0, false);
+                        v1 = this._ellipsoid.toCartesianWithLngLatElevValues(theta1, rho1, 0, false);
+                        //v2 = this.toCartesian(theta, rho1, 0, false);
+                        //v1 = this.toCartesian(theta1, rho1, 0, false);
+                    }
+                    else {
+                        //Otherwise, assume south pole
+                        v2 = this._ellipsoid.toCartesianWithLngLatElevValues(theta1, rho, 0, false);
+                        v1 = this._ellipsoid.toCartesianWithLngLatElevValues(theta, rho, 0, false);
+                        //v2 = this.toCartesian(theta1, rho, 0, false);
+                        //1 = this.toCartesian(theta, rho, 0, false);
+                    }
+
+                    var r, g, b;
+                    if ((rhoIndex + thetaIndex) % 2 == 1) {
+                        r = 0.8;
+                        g = 0.8;
+                        b = 0.8;
+                    }
+                    else {
+                        r = 0.6;
+                        g = 0.6;
+                        b = 0.6;
+                    }
+
+
+                    this.addTriangle(positions, normals, colors, v0, v2, v1, pointsIndex, r, g, b);
+                    pointsIndex += 9;
+                }
+            }
+            else {
+
+                //THis is the normal case, where we'ere not doing a top or a bottom.  In thise case, we actually do two triangles for each step.
 
                 var v0, v1, v2, v3;
 
-                v0 = this._ellipsoid.toCartesianWithLngLatElev(rho, theta, 0);
-                v1 = this._ellipsoid.toCartesianWithLngLatElev(rho, theta1, 0);
-                v2 = this._ellipsoid.toCartesianWithLngLatElev(rho1, theta, 0);
-                v3 = this._ellipsoid.toCartesianWithLngLatElev(rho1, theta1, 0);
+                for (thetaIndex = 0; thetaIndex < meridians; thetaIndex++) {
+                    theta = thetaIndex * thetaStep;
+                    theta1 = (thetaIndex + 1) * thetaStep;
 
-                var color = null;
-                if (this._vertexColors == null)
-                {
-                    color = defaultColor;                    
-                }
-                else
-                {
-                    color = this._vertexColors[(pointsIndex / 18) % this._vertexColors.length]
-                }
+                    var r, g, b;
+                    if ((rhoIndex + thetaIndex) % 2 == 1) {
+                        r = 0.8;
+                        g = 0.8;
+                        b = 0.8;
+                    }
+                    else {
+                        r = 0.6;
+                        g = 0.6;
+                        b = 0.6;
+                    }
 
-                this.addTriangle(positions, normals, colors, v0, v1, v2, pointsIndex, color.r, color.g, color.b);
-                pointsIndex += 9;
-                this.addTriangle(positions, normals, colors, v1, v3, v2, pointsIndex, color.r, color.g, color.b);
-                pointsIndex += 9;
+                    v0 = this._ellipsoid.toCartesianWithLngLatElevValues(theta, rho, 0, false);
+                    v1 = this._ellipsoid.toCartesianWithLngLatElevValues(theta1, rho1, 0, false);
+                    v2 = this._ellipsoid.toCartesianWithLngLatElevValues(theta, rho1, 0, false);
+                    v3 = this._ellipsoid.toCartesianWithLngLatElevValues(theta1, rho, 0, false);
+
+                    this.addTriangle(positions, normals, colors, v0, v2, v1, pointsIndex, r, g, b);
+                    pointsIndex += 9;
+
+                    this.addTriangle(positions, normals, colors, v0, v1, v3, pointsIndex, r, g, b);
+                    pointsIndex += 9;
+                }
             }
+
+            rhoIndex++;
         }
 
-        var offsets = triangleCount / chunksize;
+        this._geometry.offsets = [];
+
+        var offsets = triangles / chunkSize;
 
         for (var i = 0; i < offsets; i++) {
             var offset = {
-                start: i * chunksize * 3,
-                index: i * chunksize * 3,
-                count: Math.min(triangleCount - (i * chunksize), chunksize) * 3
+                start: i * chunkSize * 3,
+                index: i * chunkSize * 3,
+                count: Math.min(triangles - (i * chunkSize), chunkSize) * 3
             };
 
-            newGeometry.offsets.push(offset);
+            this._geometry.offsets.push(offset);
         }
 
-        newGeometry.computeBoundingSphere();
-
-        this._geometry = newGeometry;
+        this._geometry.computeBoundingSphere();
 
         var mesh = new THREE.Mesh(this._geometry, this._material);
 
-        mesh.userData.layer = this;
+        mesh.userData.loader = this;
 
         this._mesh = mesh;
 
     },
 
+    //Adds a triangle to the buffer geometry at the given index.
     addTriangle: function (positions, normals, colors, v0, v1, v2, pointsIndex, r, g, b) {
         var ab = new THREE.Vector3();
         var cb = new THREE.Vector3();
@@ -214,13 +289,6 @@ MapSphere.Layers.Layer = MapSphere.UIEventHost.extend({
         normals[pointsIndex + 7] = cb.y;
         normals[pointsIndex + 8] = cb.z;
 
-        var color = new THREE.Color();
-
-        //color.setRGB(255, 255, 255);
-        /*var r = Math.random();
-        var g = Math.random();
-        var b = Math.random();*/
-
         colors[pointsIndex] = r;
         colors[pointsIndex + 1] = g;
         colors[pointsIndex + 2] = b;
@@ -232,9 +300,24 @@ MapSphere.Layers.Layer = MapSphere.UIEventHost.extend({
         colors[pointsIndex + 6] = r;
         colors[pointsIndex + 7] = g;
         colors[pointsIndex + 8] = b;
-
-        //Increment the triangle count
-        this._triangleCount++;
     },
+
+    updateShaders: function()
+    {
+        var vertShader = this._vertexShaderContents;
+            
+
+        this._material = new THREE.ShaderMaterial({
+            uniforms: unis,
+            attributes: {},
+            vertexShader: vertShader,
+            fragmentShader: fragShader
+        });
+
+        if(this._mesh != null)
+        {
+            this._mesh.material = this._material;
+        }
+    }
 
 });

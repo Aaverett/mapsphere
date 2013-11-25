@@ -20,8 +20,14 @@
 
             ms = new MapSphere.MapSphere($("#map"), options);
 
-            var belLayerOpts = {
+            var stdOptions = {
+                path: "assets/bluemarble.jpg"
+            };
 
+            var std = new MapSphere.Decorations.StaticTextureDecoration(stdOptions);
+
+            var belLayerOpts = {
+                decorations: [std]
             };
 
             var basicEllipsoidLayer = new MapSphere.Layers.BasicEllipsoidLayer(belLayerOpts);

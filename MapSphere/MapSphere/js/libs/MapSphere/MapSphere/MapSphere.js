@@ -132,12 +132,19 @@ MapSphere.MapSphere = MapSphere.UIEventHost.extend({
 
         this.renderer = new THREE.WebGLRenderer(rendererOptions);
 
+        this.camera = new THREE.PerspectiveCamera(
+                this.fov, 
+                this.getAspectRatio(), 
+                this.minCullDistance, 
+                this.maxCullDistance);
+
+        this.scene = new THREE.Scene();
+
         var clearColor = new THREE.Color(0x000000);
         this.renderer.setClearColor(clearColor, 1);
 
-        //Create the scene and camera objects.
-        this.scene = new THREE.Scene();
-        this.camera = new THREE.PerspectiveCamera(this.fov, this.getAspectRatio(), this.minCullDistance, this.maxCullDistance);
+        this.scene.add(this.camera);
+        
 
         //Do we already have a camera controller?  No?  Ok, create a default one.
         if (this.cameraController == null) {
@@ -147,9 +154,7 @@ MapSphere.MapSphere = MapSphere.UIEventHost.extend({
 
             this.setCameraController(new MapSphere.CameraControllers.OrbitCameraController(this.camera, opts));
         }
-
-        this.scene.add(this.camera);
-
+        
         this.renderer.setSize(this.canvas.width(), this.canvas.height());
 
 
@@ -157,7 +162,8 @@ MapSphere.MapSphere = MapSphere.UIEventHost.extend({
         if (this.doTestGeometry) {
             var cube = new THREE.SphereGeometry(this.ellipsoid.getEquatorialRadius(), 36, 36);
 
-            var material = new THREE.MeshBasicMaterial({ color: 0x66ff00});
+            var material = new THREE.MeshBasicMaterial({
+                map: THREE.ImageUtils.loadTexture("assets/bluemarble.jpg")});
 
             var mesh = new THREE.Mesh(cube, material);
 
@@ -168,11 +174,13 @@ MapSphere.MapSphere = MapSphere.UIEventHost.extend({
         this.ambientLight = new THREE.AmbientLight(0xaaaaaa);
         this.scene.add(this.ambientLight);
 
-        /*this.sunLight = new THREE.PointLight(0xffffff, 3, this.ellipsoid.getEquatorialRadius() * 15);
+        this.sunLight = new THREE.PointLight(0xffffff, 3, this.ellipsoid.getEquatorialRadius() * 15);
         this.sunLight.position.set(this.ellipsoid.getEquatorialRadius() * 10, 0, 0);
 
-        this.scene.add(this.sunLight);*/
+        this.scene.add(this.sunLight);
 
+        this.projector = new THREE.Projector();
+        this.raycaster = new THREE.Raycaster();
     },
 
     //This initializes all of the layers presently in the layers array.
@@ -205,13 +213,25 @@ MapSphere.MapSphere = MapSphere.UIEventHost.extend({
     },
 
     handleCameraMoved: function(args) {
-        
-        //Alert the layers that the visible extent changed.
-        for(var i=0; i < this.layers.length; i++)
+        //The funny thing about the camera moving is that it sometimes moves more than once.
+
+        //If there's already a camera moving timer set...
+        if (this.cameraDoneMovingTimer != null)
         {
-            this.layers[i].setVisibleExtent(args.extent);
+            window.clearTimeout(this.cameraDoneMovingTimer);
+            this.cameraDoneMovingTimer = null;
         }
 
+        this.cameraDoneMovingTimer = window.setTimeout(this.handleCameraDoneMovingTimeout.bind(this), 2000);
+    },
+
+    handleCameraDoneMovingTimeout: function (args) {
+        
+        //Request that each layer refresh its geometry.
+        for(var i=0; i < this.layers.length; i++)
+        {
+            this.layers[i].refreshGeometry();
+        }
     },
 
     resize: function (width, height) {
@@ -263,6 +283,10 @@ MapSphere.MapSphere = MapSphere.UIEventHost.extend({
         this.layers.push(layer);
         layer.setVisibleExtent(this.cameraController.getCameraVisibleExtent());
         layer.refreshGeometry();
+
+        var mesh = layer.getMesh();
+
+        this.scene.add(mesh);
     },
 
     removeLayer: function()

@@ -177,10 +177,14 @@ MapSphere.CameraControllers.OrbitCameraController = MapSphere.CameraControllers.
             maxy: this.cameraLocation.lat(),
             miny: this.cameraLocation.lat()
         };
+        
+        var retExtent;
 
         var planetRadius = this.ellipsoid.getEquatorialRadius();
 
-        var orbitRadius = planetRadius + this.cameraLocation.elev();
+        var cameraElev = this.cameraLocation.elev();
+
+        var orbitRadius = planetRadius + cameraElev;
 
         //This is a quick and dirty method of doing this, but should work for now.  
         //Redo this later, if needed.
@@ -197,13 +201,28 @@ MapSphere.CameraControllers.OrbitCameraController = MapSphere.CameraControllers.
         var hAVRad = MapSphere.degToRad(halfAngleV);
         var hAHRad = MapSphere.degToRad(halfAngleH);
 
-        var maxHFovDist = Math.sin(halfAngleH) * orbitRadius;
-        var maxVFovDist = Math.sin(halfAngleV) * orbitRadius;
+        var surfaceSwathHalfWidth = Math.sin(hAHRad) * this.cameraLocation.elev();
+        var surfaceSwathHalfHeight = Math.sin(hAVRad) * this.cameraLocation.elev();
+        var orbitSwathHalfWidth = Math.sin(hAHRad) * orbitRadius;
+        var orbitSwathHalfHeight = Math.sin(hAVRad) * orbitRadius;
 
-        //If the maximum distance is greater than the planet's radius, that means that the 
-        if(maxHFovDist > planetRadius)
+        if(orbitSwathHalfHeight >= planetRadius || orbitSwathHalfWidth >= planetRadius)
+        {
+            extent.maxx = 360.0;
+            extent.minx = 0.0;
+            extent.maxy = 90.0;
+            extent.miny = -90.0;
+        }
+        else
         {
 
         }
+
+        var sw = new MapSphere.Geography.LngLatElev(extent.minx, extent.miny);
+        var ne = new MapSphere.Geography.LngLatElev(extent.maxx, extent.maxy);
+
+        retExtent = new MapSphere.Geography.Envelope(sw, ne);
+
+        return retExtent;
     }
 });

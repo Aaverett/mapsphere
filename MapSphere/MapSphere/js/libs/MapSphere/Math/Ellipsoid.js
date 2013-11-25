@@ -55,31 +55,45 @@ MapSphere.Math.Ellipsoid = MapSphere.Class.extend({
         return this.toCartesianWithLngLatElev();
     },
 
-    toCartesianWithLngLatElev: function (lngLatElev) {
-        var radius = this.getPlanetRadiusAtLatitude(lngLatElev.lat());
+    toCartesianWithLngLatElev: function(lngLatElev)
+    {
+        return this.toCartesianWithLngLatElevValues(lngLatElev.lng(),
+                                                    lngLatElev.lat(),
+                                                    lngLatElev.elev(), true);
+    },
 
-        var pX, pY, pZ;
+    toCartesianWithLngLatElevValues: function (lon, lat, elev, convertToRadians) {
+        var x, y, z;
+        var latRad;
+        var lonRad;
+               
+        if (convertToRadians == false) {
+            latRad = lat;
+            lonRad = lon;
+        }
+        else
+        {
+            latRad = MapSphere.degToRad(lat);
+            lonRad = MapSphere.degToRad(lon);
+        }
 
-        pZ = Math.sin(MapSphere.degToRad(lngLatElev.lat()));
-        r2 = Math.cos(MapSphere.degToRad(lngLatElev.lat()));
+        //Get the full radius of our orbit at the given altitude.
+        var radius = this.getPlanetRadiusAtLatitude(lat) + elev;
 
-        pX = r2 * Math.cos(MapSphere.degToRad(lngLatElev.lng()));
-        pY = r2 * Math.sin(MapSphere.degToRad(lngLatElev.lng()));
+        //Compute the Z value
+        z = Math.sin(latRad) * radius;
 
-        var gX, gY, gZ;
-        var cX, cY, cZ;
+        //Get the radius of our circle on the X/Y plane that given parallel describes.
+        var radiusXY = Math.cos(latRad) * radius;
 
-        gX = radius * pX;
-        gY = radius * pY;
-        gZ = radius * pZ;
+        //Compute the X and Y components.
+        x = Math.cos(lonRad) * radiusXY;
+        y = Math.sin(lonRad) * radiusXY;
 
-        cX = (radius + lngLatElev.lat()) * pX;
-        cY = (radius + lngLatElev.lat()) * pY;
-        cZ = (radius + lngLatElev.lat()) * pZ;
+        //Produce a vector object.
+        var v = new THREE.Vector3(x, y, z);
 
-        var vec3Pos = new THREE.Vector3(cX, cY, cZ);
-
-        return vec3Pos;
+        return v;
     }
 
 });

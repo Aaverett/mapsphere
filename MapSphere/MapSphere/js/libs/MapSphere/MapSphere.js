@@ -27,6 +27,8 @@ MapSphere.scriptFiles =
         "Layers/Layer.js",
         "Layers/BasicEllipsoidLayer.js",
         "Layers/ArcGISRESTLayer.js",
+        "Decorations/Decoration.js",
+        "Decorations/StaticTextureDecoration.js",
         "MapSphere/MapSphere.js"
     ];
 
@@ -35,6 +37,7 @@ MapSphere.Math = {};
 MapSphere.CameraControllers = {};
 MapSphere.Geography = {};
 MapSphere.Layers = {};
+MapSphere.Decorations = {};
 
 (function () {
 

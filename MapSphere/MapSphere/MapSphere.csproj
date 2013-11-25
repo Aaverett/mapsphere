@@ -60,6 +60,7 @@
     <Reference Include="System.EnterpriseServices" />
   </ItemGroup>
   <ItemGroup>
+    <Content Include="assets\bluemarble.jpg" />
     <Content Include="css\ui-lightness\images\animated-overlay.gif" />
     <Content Include="css\ui-lightness\images\ui-bg_diagonals-thick_18_b81900_40x40.png" />
     <Content Include="css\ui-lightness\images\ui-bg_diagonals-thick_20_666666_40x40.png" />
@@ -78,6 +79,8 @@
     <Content Include="css\ui-lightness\jquery-ui-1.10.3.custom.css" />
     <Content Include="css\ui-lightness\jquery-ui-1.10.3.custom.min.css" />
     <Content Include="index.html" />
+    <Content Include="js\libs\MapSphere\Decorations\Decoration.js" />
+    <Content Include="js\libs\MapSphere\Decorations\StaticTextureDecoration.js" />
     <Content Include="js\libs\JQuery\jquery.mousewheel.js" />
     <Content Include="js\libs\MapSphere\CameraControllers\CameraController.js" />
     <Content Include="js\libs\JQuery\jquery-ui-1.10.3.custom.min.js" />
@@ -87,7 +90,6 @@
     <Content Include="js\libs\MapSphere\CameraControllers\OrbitCameraController.js" />
     <Content Include="js\libs\MapSphere\Geography\Envelope.js" />
     <Content Include="js\libs\MapSphere\Geography\LngLat.js" />
-    <Content Include="js\libs\MapSphere\Layers\ArcGISRESTLayer.js" />
     <Content Include="js\libs\MapSphere\Layers\BasicEllipsoidLayer.js" />
     <Content Include="js\libs\MapSphere\Layers\Layer.js" />
     <Content Include="js\libs\MapSphere\MapSphere.js" />
