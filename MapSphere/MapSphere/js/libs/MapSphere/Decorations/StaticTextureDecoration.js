@@ -4,7 +4,7 @@
 MapSphere.Decorations.StaticTextureDecoration = MapSphere.Decorations.Decoration.extend({
     _texturePath: null,
     _texture: null, //This type of decoration only has one texture, so we just keep a handle on it.
-    
+    _tempImg: null,
     init: function (options)
     {
         //Do the base class initialization.
@@ -31,13 +31,18 @@ MapSphere.Decorations.StaticTextureDecoration = MapSphere.Decorations.Decoration
             var img = document.createElement("img");
             img.onload = this.loadTextureComplete.bind(this);
             img.src = this._texturePath;
+            this._tempImg = img;
             
-            this._textures.push(img);
         }
     },
 
     loadTextureComplete: function()
     {
-        this.layer.updateTextures();
+        if (this._tempImg != null)
+        {
+            this._textures.push(this._tempImg);
+        }
+
+        this._layer.updateTextures();
     }
 });

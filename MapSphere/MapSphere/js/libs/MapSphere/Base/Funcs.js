@@ -60,6 +60,7 @@ MapSphere.blendTextures = function(textures)
 
 
     var finalTex = new THREE.Texture(canvas);
+    finalTex.needsUpdate = true;
 
     return finalTex;
     

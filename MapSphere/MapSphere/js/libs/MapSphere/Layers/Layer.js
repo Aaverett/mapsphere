@@ -18,6 +18,8 @@ MapSphere.Layers.Layer = MapSphere.UIEventHost.extend({
 
     _decorations: new Array(),
 
+    _texture: null,
+
     init: function (options)
     {
         if (MapSphere.notNullNotUndef(options)) {
@@ -36,6 +38,11 @@ MapSphere.Layers.Layer = MapSphere.UIEventHost.extend({
             if(MapSphere.notNullNotUndef(options.decorations))
             {
                 this._decorations = options.decorations;
+
+                for(var i=0; i < this._decorations.length; i++)
+                {
+                    this._decorations[i].setLayer(this);
+                }
             }
         }
     },
@@ -43,7 +50,7 @@ MapSphere.Layers.Layer = MapSphere.UIEventHost.extend({
     initMaterial: function()
     {
         //In this base implementation, we create a basic material that will at least show up as something visible in the scene.
-        this._material = new THREE.MeshBasicMaterial({ color: 0xaaaaaa });
+        this._material = new THREE.MeshLambertMaterial({ map: this._texture });
     },
 
     //Return the geometry.
@@ -374,71 +381,12 @@ MapSphere.Layers.Layer = MapSphere.UIEventHost.extend({
         //Now, we need to blend the images together.
         var blendedTexture = MapSphere.blendTextures(textures);
 
-        this._material = new THREE.MeshLambertMaterial({
-            map: blendedTexture
-        });
+        this._texture = blendedTexture;
+        
+        this._material.map = this._texture;
 
         return;
 
-        var unis = {};
-
-        //Now, compose the unis array.
-        for (var i = 0; i < textures.length; i++)
-        {
-            var texname = "texture" + i;
-
-            var uniData = { type: "t", value: textures[i] };
-
-            unis[texname] = uniData;
-        }
-
-       
-        //Compose the fragment shader
-        var fragShader = this.composeFragmentShader(unis);
-
-        
-        this._material = new THREE.ShaderMaterial({
-            uniforms: unis,
-            attributes: {},
-            vertexShader: vertShader,
-            fragmentShader: fragShader
-        });
-
-        if(this._mesh != null)
-        {
-            this._mesh.material = this._material;
-        }
-    },
-
-    //Composes a fragment shader program as a string and returns it.
-    composeFragmentShader: function(unis)
-    {
-        var fragShader = "";
-
-        for (var k in unis) {
-            var line = "uniform sampler2D " + k + ";\r\n";
-            fragShader += line;
-        }
-
-        fragShader += "varying vec2 vUv;\r\n" +
-            "varying vec3 vNormal;\r\n" +
-            "varying vec3 vViewPosition;\r\n" + 
-            "void main {\r\n";
-
-        for (var k in unis) {
-            fragShader += "vec4 color" + k + " = texture2D( " + k + ", vUv );\r\n";
-        }
-
-        //Something about hacking in a light...
-        fragShader += "vec3 normal = normalize( vNormal );\r\n" + 
-            "vec3 lightDir = normalize( vViewPosition );\r\n" + 
-            "float dotProduct = max( dot( normal, lightDir ), 0.0 ) + 0.2;\r\n";
-        
-            
-
-            //gl_FragColor = vec4( mix( tColor.rgb, tColor2.rgb, tColor2.a ), 1.0 ) * dotProduct;
-
-        fragShader += "}\r\n";
     }
 
 });

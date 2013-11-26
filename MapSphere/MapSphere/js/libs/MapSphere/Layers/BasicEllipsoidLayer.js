@@ -42,24 +42,6 @@ MapSphere.Layers.BasicEllipsoidLayer = MapSphere.Layers.Layer.extend({
         this.initMaterial();
     },
 
-    initMaterial: function () {
-
-        this.updateTextures();
-
-        return;
-
-        //Creates a material for our geometry.
-        var texture = THREE.ImageUtils.loadTexture("assets/bluemarble.jpg");
-        texture.needsUpdate = true;
-        var options = {
-            //color: 0xaaaaaa, //this._vertexColors,
-            //vertexColors: THREE.VertexColors,
-            map: texture
-        };
-        this._material = new THREE.MeshLambertMaterial(options);
-        //this._material.side = THREE.DoubleSided;
-    },
-
     setVisibleExtent: function(extent)
     {
         this._super(extent);

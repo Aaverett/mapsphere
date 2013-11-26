@@ -23,5 +23,10 @@ MapSphere.Decorations.Decoration = MapSphere.UIEventHost.extend({
     getTextures: function()
     {
         return this._textures;
+    },
+
+    setLayer: function(layer)
+    {
+        this._layer = layer;
     }
 });
