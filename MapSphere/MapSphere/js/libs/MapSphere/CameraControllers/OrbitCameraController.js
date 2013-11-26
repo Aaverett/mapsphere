@@ -208,14 +208,27 @@ MapSphere.CameraControllers.OrbitCameraController = MapSphere.CameraControllers.
 
         if(orbitSwathHalfHeight >= planetRadius || orbitSwathHalfWidth >= planetRadius)
         {
-            extent.maxx = 360.0;
-            extent.minx = 0.0;
+            extent.maxx = 180.0;
+            extent.minx = -180.0;
             extent.maxy = 90.0;
             extent.miny = -90.0;
         }
         else
         {
+            //We're in close enough that the camera can't see the entire world.  Let's figure out what it can see.
+            sinThetaW = surfaceSwathHalfWidth / planetRadius;
+            var thetaW = Math.asin(sinThetaW);
 
+            var thetaWDeg = MapSphere.radToDeg(thetaW);
+
+            sinThetaH = surfaceSwathHalfHeight / planetRadius;
+            var thetaH = Math.asin(sinThetaH);
+            var thetaHDeg = MapSphere.radToDeg(thetaH);
+
+            extent.minx -= 3 * thetaWDeg;
+            extent.maxx += 3 * thetaWDeg;
+            extent.miny -= 3 * thetaHDeg;
+            extent.maxy += 3 * thetaHDeg;
         }
 
         var sw = new MapSphere.Geography.LngLatElev(extent.minx, extent.miny);

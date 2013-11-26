@@ -3,6 +3,7 @@
 //This is the base class from which all of the layer classes are derived.
 
 MapSphere.Layers.Layer = MapSphere.UIEventHost.extend({
+    _mapSphere: null,
     _geometry: null,
 
     _visibleExtent: null,
@@ -19,6 +20,8 @@ MapSphere.Layers.Layer = MapSphere.UIEventHost.extend({
     _decorations: new Array(),
 
     _texture: null,
+
+    _mesh: null,
 
     init: function (options)
     {
@@ -53,6 +56,16 @@ MapSphere.Layers.Layer = MapSphere.UIEventHost.extend({
         this._material = new THREE.MeshLambertMaterial({ map: this._texture });
     },
 
+    setMapSphere: function(mapSphere)
+    {
+        this._mapSphere = mapSphere;
+    },
+
+    getMapSphere: function(mapSphere)
+    {
+        return this._mapSphere;
+    },
+
     //Return the geometry.
     getGeometry: function () {
         return this._geometry; 
@@ -64,6 +77,10 @@ MapSphere.Layers.Layer = MapSphere.UIEventHost.extend({
 
     setVisibleExtent: function (extent) {
         this._visibleExtent = extent;
+    },
+
+    getVisibleExtent: function() {
+        return this._visibleExtent;
     },
 
     refreshGeometry: function()
@@ -132,7 +149,7 @@ MapSphere.Layers.Layer = MapSphere.UIEventHost.extend({
         var colors = this._geometry.attributes.color.array;
         var uvs = this._geometry.attributes.uv.array;
 
-        var theta = 0;
+        var theta = -1.0 * (Math.PI / 2);
         var rhoIndex = 0;
         var thetaIndex;
 
@@ -164,7 +181,7 @@ MapSphere.Layers.Layer = MapSphere.UIEventHost.extend({
             var rho1 = rho0 - ((rhoIndex + 1) * rhoStep);
 
             //The conical top and bottom portions have triangles instead of two-triangle trapezoids.
-            if (rhoIndex == 0 || rhoIndex + 1 == parallels) {
+            if ((rhoIndex == 0 && rho0 == (Math.PI / 2)) || (rhoIndex + 1 == parallels && rhoPrime == (-1.0 * Math.PI / 2))) {
                 
                 var v0, v1, v2;
 
@@ -188,8 +205,8 @@ MapSphere.Layers.Layer = MapSphere.UIEventHost.extend({
 
 
                 for (thetaIndex = 0; thetaIndex < meridians; thetaIndex++) {
-                    theta = thetaIndex * thetaStep;
-                    theta1 = (thetaIndex + 1) * thetaStep;
+                    theta = (thetaIndex * thetaStep) + theta0;
+                    theta1 = (thetaIndex + 1) * thetaStep + theta0;
 
                     //If it's the first ring (north pole)
                     if (rhoIndex == 0) {
@@ -233,8 +250,8 @@ MapSphere.Layers.Layer = MapSphere.UIEventHost.extend({
                 var v0, v1, v2, v3;
 
                 for (thetaIndex = 0; thetaIndex < meridians; thetaIndex++) {
-                    theta = thetaIndex * thetaStep;
-                    theta1 = (thetaIndex + 1) * thetaStep;
+                    theta = thetaIndex * thetaStep + theta0;
+                    theta1 = (thetaIndex + 1) * thetaStep + theta0;
 
                     var r, g, b;
                     if ((rhoIndex + thetaIndex) % 2 == 1) {
@@ -291,7 +308,7 @@ MapSphere.Layers.Layer = MapSphere.UIEventHost.extend({
 
         mesh.userData.loader = this;
 
-        this._mesh = mesh;
+        return mesh;
 
     },
     
@@ -358,11 +375,6 @@ MapSphere.Layers.Layer = MapSphere.UIEventHost.extend({
     //This is done in order to support multiple textures.
     updateTextures: function()
     {
-
-
-        //This is just a constant string.
-        var vertShader = MapSphere.simplestVertexShader;
-        
         var textures = new Array();
 
         //Compose an array of all the textures to be blended.
@@ -379,11 +391,13 @@ MapSphere.Layers.Layer = MapSphere.UIEventHost.extend({
         }
 
         //Now, we need to blend the images together.
-        var blendedTexture = MapSphere.blendTextures(textures);
+        var blendedTexture = MapSphere.stackTextures(textures);
 
         this._texture = blendedTexture;
-        
-        this._material.map = this._texture;
+
+        this.initMaterial();
+
+        this._mesh.material = this._material;
 
         return;
 

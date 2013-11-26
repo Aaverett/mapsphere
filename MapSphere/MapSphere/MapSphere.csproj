@@ -80,6 +80,7 @@
     <Content Include="css\ui-lightness\jquery-ui-1.10.3.custom.css" />
     <Content Include="css\ui-lightness\jquery-ui-1.10.3.custom.min.css" />
     <Content Include="index.html" />
+    <Content Include="js\libs\MapSphere\Decorations\ArcGISRESTServiceDecoration.js" />
     <Content Include="js\libs\MapSphere\Decorations\Decoration.js" />
     <Content Include="js\libs\MapSphere\Decorations\StaticTextureDecoration.js" />
     <Content Include="js\libs\JQuery\jquery.mousewheel.js" />

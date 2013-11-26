@@ -18,7 +18,7 @@ MapSphere.MapSphere = MapSphere.UIEventHost.extend({
 
     renderer: null,
 
-    fov: 90,
+    fov: 60,
 
     minCullDistance: 0.1,
     maxCullDistance: 100000000,
@@ -31,6 +31,8 @@ MapSphere.MapSphere = MapSphere.UIEventHost.extend({
     doTestGeometry: false,
 
     layers: new Array(),
+
+    _visibleExtent: null,
 
     //Constructor
     init: function (targetElement, options) {
@@ -174,8 +176,8 @@ MapSphere.MapSphere = MapSphere.UIEventHost.extend({
         this.ambientLight = new THREE.AmbientLight(0xaaaaaa);
         this.scene.add(this.ambientLight);
 
-        this.sunLight = new THREE.PointLight(0xffffff, 3, this.ellipsoid.getEquatorialRadius() * 15);
-        this.sunLight.position.set(this.ellipsoid.getEquatorialRadius() * 10, 0, 0);
+        this.sunLight = new THREE.PointLight(0x555555, 3, this.ellipsoid.getEquatorialRadius() * 15);
+        this.sunLight.position.set(this.ellipsoid.getEquatorialRadius() * 20, 0, 0);
 
         this.scene.add(this.sunLight);
 
@@ -222,6 +224,8 @@ MapSphere.MapSphere = MapSphere.UIEventHost.extend({
             this.cameraDoneMovingTimer = null;
         }
 
+        this._visibleExtent = args.extent;
+
         this.cameraDoneMovingTimer = window.setTimeout(this.handleCameraDoneMovingTimeout.bind(this), 2000);
     },
 
@@ -230,6 +234,7 @@ MapSphere.MapSphere = MapSphere.UIEventHost.extend({
         //Request that each layer refresh its geometry.
         for(var i=0; i < this.layers.length; i++)
         {
+            this.layers[i].setVisibleExtent(this._visibleExtent);
             this.layers[i].refreshGeometry();
         }
     },
@@ -297,10 +302,9 @@ MapSphere.MapSphere = MapSphere.UIEventHost.extend({
 
     //Event handlers for layer events
     handleLayerGeometryChanged: function(args) {
-        if(args.allNewGeometry)
-        {
-            this.scene.remove(args.sender.getGeometry());
-        }
+        
+        this.scene.add(args.newMesh);
+        this.scene.remove(args.oldMesh);
     }
     //end of layer event handlers
 })

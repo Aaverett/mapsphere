@@ -39,18 +39,27 @@ MapSphere.simplestVertexShader = "varying vec2 vUv;\r\n" +
     "    gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );\r\n" +
     "}\r\n";
 
-MapSphere.blendTextures = function(textures)
+MapSphere.stackTextures = function(textures)
 {
-    //create a canvas.
+    //Before we start creating stuff, we need to do some planning.  How big is our biggest texture?
+    var maxW=-1, maxH = -1;
+
+    for (var i = 0; i < textures.length; i++)
+    {
+        if (textures[i].naturalWidth > maxW) maxW = textures[i].naturalWidth;
+
+        if(textures[i].naturalHeight > maxH) maxH = textures[i].naturalHeight
+    }
+
     var canvas = document.createElement("canvas");
-    canvas.width = 1500;
-    canvas.height = 1000;
-    //document.body.appendChild(canvas);
+    canvas.width = maxW;
+    canvas.height = maxH;
 
     var ctx = canvas.getContext("2d");
     for(var i=0; i<textures.length; i++)
     {
-        ctx.drawImage(textures[i], 0, 0, 1500, 1000);
+        //Write the image data into our canvas, stretching it so that it takes up the whole canvas.
+        ctx.drawImage(textures[i], 0, 0, maxW, maxH);
     }
 
     /*var img1 = $("#img1")[0];

@@ -29,6 +29,7 @@ MapSphere.scriptFiles =
         "Layers/ArcGISRESTLayer.js",
         "Decorations/Decoration.js",
         "Decorations/StaticTextureDecoration.js",
+        "Decorations/ArcGISRESTServiceDecoration.js",
         "MapSphere/MapSphere.js"
     ];
 

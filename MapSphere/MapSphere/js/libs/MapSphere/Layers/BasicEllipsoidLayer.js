@@ -54,7 +54,17 @@ MapSphere.Layers.BasicEllipsoidLayer = MapSphere.Layers.Layer.extend({
         //Do the base class implementation.
         this._super();
 
-        //First, generate the geometry for the given extent.
-        this.generateEllipseGeometryForVisibleExtent();
+        //Generate new geometry...
+        var m = this.generateEllipseGeometryForVisibleExtent();
+
+        var args = {
+            layer: this,
+            oldMesh: this._mesh,
+            newMesh: m
+        }
+
+        this._mesh = m;
+
+        this.raiseEvent("geometryChanged", args);
     }
 });
