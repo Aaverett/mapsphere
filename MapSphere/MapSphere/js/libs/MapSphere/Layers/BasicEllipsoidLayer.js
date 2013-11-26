@@ -44,7 +44,7 @@ MapSphere.Layers.BasicEllipsoidLayer = MapSphere.Layers.Layer.extend({
 
     initMaterial: function () {
 
-        this.updateShaders();
+        this.updateTextures();
 
         return;
 

@@ -28,16 +28,16 @@ MapSphere.Decorations.StaticTextureDecoration = MapSphere.Decorations.Decoration
     {
         if (this._texturePath != null)
         {
-            var tex = THREE.ImageUtils.loadTexture(this._texturePath);
-
-            var ind = $.inArray(this._texture, this._textures);
-
-            if(ind > -1)
-            {
-                this._textures.splice(ind, 1);
-            }
-
-            this._textures.push(tex);
+            var img = document.createElement("img");
+            img.onload = this.loadTextureComplete.bind(this);
+            img.src = this._texturePath;
+            
+            this._textures.push(img);
         }
+    },
+
+    loadTextureComplete: function()
+    {
+        this.layer.updateTextures();
     }
 });

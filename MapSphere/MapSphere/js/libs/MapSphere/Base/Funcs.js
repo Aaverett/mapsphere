@@ -38,3 +38,29 @@ MapSphere.simplestVertexShader = "varying vec2 vUv;\r\n" +
     "    vViewPosition = -mvPosition.xyz;\r\n" +
     "    gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );\r\n" +
     "}\r\n";
+
+MapSphere.blendTextures = function(textures)
+{
+    //create a canvas.
+    var canvas = document.createElement("canvas");
+    canvas.width = 1500;
+    canvas.height = 1000;
+    //document.body.appendChild(canvas);
+
+    var ctx = canvas.getContext("2d");
+    for(var i=0; i<textures.length; i++)
+    {
+        ctx.drawImage(textures[i], 0, 0, 1500, 1000);
+    }
+
+    /*var img1 = $("#img1")[0];
+    var img2 = $("#img2")[0];
+    ctx.drawImage(img1, 0, 0, 1500, 1000);
+    ctx.drawImage(img2, 0, 0, 1500, 1000);*/
+
+
+    var finalTex = new THREE.Texture(canvas);
+
+    return finalTex;
+    
+}

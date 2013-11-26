@@ -349,8 +349,10 @@ MapSphere.Layers.Layer = MapSphere.UIEventHost.extend({
 
     //Updates the material applied to our geometry with custom vertex and fragment shaders
     //This is done in order to support multiple textures.
-    updateShaders: function()
+    updateTextures: function()
     {
+
+
         //This is just a constant string.
         var vertShader = MapSphere.simplestVertexShader;
         
@@ -368,6 +370,15 @@ MapSphere.Layers.Layer = MapSphere.UIEventHost.extend({
                 textures.push(decTex[j]);
             }
         }
+
+        //Now, we need to blend the images together.
+        var blendedTexture = MapSphere.blendTextures(textures);
+
+        this._material = new THREE.MeshLambertMaterial({
+            map: blendedTexture
+        });
+
+        return;
 
         var unis = {};
 
@@ -425,7 +436,7 @@ MapSphere.Layers.Layer = MapSphere.UIEventHost.extend({
         
             
 
-            gl_FragColor = vec4( mix( tColor.rgb, tColor2.rgb, tColor2.a ), 1.0 ) * dotProduct;
+            //gl_FragColor = vec4( mix( tColor.rgb, tColor2.rgb, tColor2.a ), 1.0 ) * dotProduct;
 
         fragShader += "}\r\n";
     }
