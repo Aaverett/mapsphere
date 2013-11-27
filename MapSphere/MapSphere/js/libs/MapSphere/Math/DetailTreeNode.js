@@ -118,10 +118,10 @@
                     r = g = b = 0.8;
                 }
 
-                this._addTriangle(v0, v1, v2, pointIndex, r, g, b);
+                this._addTriangle(v2, v1, v0, pointIndex, r, g, b);
                 pointIndex += 9;
                 
-                this._addTriangle(v1, v3, v2, pointIndex, r, g, b);
+                this._addTriangle(v2, v3, v1, pointIndex, r, g, b);
                 pointIndex += 9;
 
                 curTheta = nextTheta;

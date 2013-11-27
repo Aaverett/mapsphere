@@ -55,7 +55,7 @@ MapSphere.Layers.Layer = MapSphere.UIEventHost.extend({
     {
         //In this base implementation, we create a basic material that will at least show up as something visible in the scene.
         //this._material = new THREE.MeshLambertMaterial({ map: this._texture });
-        this._material = new THREE.MeshLambertMaterial({vertexColors: THREE.VertexColors});
+        this._material = new THREE.MeshLambertMaterial({vertexColors: THREE.VertexColors, wireframe: true});
     },
 
     setMapSphere: function(mapSphere)
