@@ -81,8 +81,6 @@ MapSphere.CameraControllers.OrbitCameraController = MapSphere.CameraControllers.
         var newY = curY + deltaDegY;
 
         this.panToCoords(newX, newY, curElev);
-
-        $("#outspan2").text(newX + " " + newY);
     },
 
     panToLngLatElev: function(lngLatElev)

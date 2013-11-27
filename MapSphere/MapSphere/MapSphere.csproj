@@ -96,6 +96,7 @@
     <Content Include="js\libs\MapSphere\Layers\Layer.js" />
     <Content Include="js\libs\MapSphere\MapSphere.js" />
     <Content Include="js\libs\MapSphere\MapSphere\MapSphere.js" />
+    <Content Include="js\libs\MapSphere\Math\DetailTreeNode.js" />
     <Content Include="js\libs\MapSphere\Math\Ellipsoid.js" />
     <Content Include="js\libs\ThreeJS\three.min.js" />
     <Content Include="Web.config" />

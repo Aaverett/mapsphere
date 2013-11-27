@@ -22,6 +22,7 @@ MapSphere.Layers.Layer = MapSphere.UIEventHost.extend({
     _texture: null,
 
     _mesh: null,
+    _geometryRootNode: null,
 
     init: function (options)
     {
@@ -53,7 +54,8 @@ MapSphere.Layers.Layer = MapSphere.UIEventHost.extend({
     initMaterial: function()
     {
         //In this base implementation, we create a basic material that will at least show up as something visible in the scene.
-        this._material = new THREE.MeshLambertMaterial({ map: this._texture });
+        //this._material = new THREE.MeshLambertMaterial({ map: this._texture });
+        this._material = new THREE.MeshLambertMaterial({vertexColors: THREE.VertexColors});
     },
 
     setMapSphere: function(mapSphere)
@@ -95,6 +97,29 @@ MapSphere.Layers.Layer = MapSphere.UIEventHost.extend({
     //to add additional information.
     generateEllipseGeometryForVisibleExtent: function()
     {
+        if (this._geometryRootNode == null)
+        {
+            //function(parent, minTheta, maxTheta, minRho, maxRho, ellipsoid, steps, altitude, material)
+
+            var theta0Deg = this._visibleExtent.getSW().lng();
+            var rho0Deg = this._visibleExtent.getNE().lat();
+            var thetaPrimeDeg = this._visibleExtent.getNE().lng();
+            var rhoPrimeDeg = this._visibleExtent.getSW().lat();
+
+            var theta0 = MapSphere.degToRad(theta0Deg);
+            var rho0 = MapSphere.degToRad(rho0Deg);
+            var thetaPrime = MapSphere.degToRad(thetaPrimeDeg);
+            var rhoPrime = MapSphere.degToRad(rhoPrimeDeg);
+
+            this.geometryRootNode = new MapSphere.Math.DetailTreeNode(null, theta0, thetaPrime, rho0, rhoPrime, this._ellipsoid, 16, 0, this._material);
+        }
+        else
+        {
+
+        }
+
+        return this.geometryRootNode.getMesh();
+
         var parallels = 72;
         var meridians = 72;
 

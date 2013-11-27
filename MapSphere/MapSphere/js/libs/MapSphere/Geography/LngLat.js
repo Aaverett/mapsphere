@@ -9,12 +9,6 @@ MapSphere.Geography.LngLat = MapSphere.Class.extend({
     init: function (x, y) {
         this._latitude = y;
         this._longitude = x;
-
-        if (this._latitude > 90) this._latitude = 90;
-        if (this._latitude < -90) this._latitude = -90;
-
-        if (this._longitude < -180) this._longitude = -180;
-        if (this._longitude > 180) this._longitude = 180;
     },
 
     lng: function () {

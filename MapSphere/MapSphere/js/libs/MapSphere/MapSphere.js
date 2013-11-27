@@ -20,6 +20,7 @@ MapSphere.scriptFiles =
         "Base/UIEventHost.js",
         "Base/Funcs.js",
         "Math/Ellipsoid.js",
+        "Math/DetailTreeNode.js",
         "CameraControllers/CameraController.js",
         "CameraControllers/OrbitCameraController.js",
         "Geography/LngLat.js",
