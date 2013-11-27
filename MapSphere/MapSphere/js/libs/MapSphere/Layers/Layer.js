@@ -99,242 +99,33 @@ MapSphere.Layers.Layer = MapSphere.UIEventHost.extend({
     {
         if (this._geometryRootNode == null)
         {
-            //function(parent, minTheta, maxTheta, minRho, maxRho, ellipsoid, steps, altitude, material)
+            //If the root geometry node hasn't been updated, 
+            var theta0 = MapSphere.degToRad(-180);
+            var rho0 = MapSphere.degToRad(90);
+            var thetaPrime = MapSphere.degToRad(180);
+            var rhoPrime = MapSphere.degToRad(-90);
 
+            this._geometryRootNode = new MapSphere.Math.DetailTreeNode(null, theta0, thetaPrime, rho0, rhoPrime, this._ellipsoid, 64, 0, this._material);
+        }
+        else
+        {
             var theta0Deg = this._visibleExtent.getSW().lng();
-            var rho0Deg = this._visibleExtent.getNE().lat();
-            var thetaPrimeDeg = this._visibleExtent.getNE().lng();
-            var rhoPrimeDeg = this._visibleExtent.getSW().lat();
+            var thetaPrimeDeg = this._visibleExtent.getSW().lat();
+            var rho0Deg = this._visibleExtent.getNE().lng();
+            var rhoPrimeDeg = this._visibleExtent.getNE().lng();
 
+            //If the root geometry node hasn't been updated, 
             var theta0 = MapSphere.degToRad(theta0Deg);
             var rho0 = MapSphere.degToRad(rho0Deg);
             var thetaPrime = MapSphere.degToRad(thetaPrimeDeg);
             var rhoPrime = MapSphere.degToRad(rhoPrimeDeg);
 
-            this.geometryRootNode = new MapSphere.Math.DetailTreeNode(null, theta0, thetaPrime, rho0, rhoPrime, this._ellipsoid, 16, 0, this._material);
-        }
-        else
-        {
-
+            //Instruct the root node that it needs to update the geometry in the appropriate zone, if applicable.
         }
 
-        return this.geometryRootNode.getMesh();
+        return this._geometryRootNode.getMesh();
 
-        var parallels = 72;
-        var meridians = 72;
-
-        var triangles = (parallels * meridians * 2) - (2 * meridians);
-
-        this._geometry = new THREE.BufferGeometry();
-
-        this._geometry.attributes = {
-            index: {
-                itemSize: 1,
-                array: new Uint16Array(triangles * 3),
-            },
-
-            position: {
-                itemSize: 3,
-                array: new Float32Array(triangles * 3 * 3),
-            },
-
-            normal: {
-                itemSize: 3,
-                array: new Float32Array(triangles * 3 * 3),
-            },
-
-            color: {
-                itemSize: 3,
-                array: new Float32Array(triangles * 3 * 3),
-            },
-
-            uv: {
-                itemSize: 2,
-                array: new Float32Array(triangles * 3 * 2)
-            }
-        };
-
-
-        // break geometry into
-        // chunks of 21,845 triangles (3 unique vertices per triangle)
-        // for indices to fit into 16 bit integer number
-        // floor(2^16 / 3) = 21845
-
-        var chunkSize = 21845;
-
-        var indices = this._geometry.attributes.index.array;
-
-        for (var i = 0; i < indices.length; i++) {
-            var val = i % (3 * chunkSize);
-            indices[i] = val;
-        }
-
-        var positions = this._geometry.attributes.position.array;
-        var normals = this._geometry.attributes.normal.array;
-        var colors = this._geometry.attributes.color.array;
-        var uvs = this._geometry.attributes.uv.array;
-
-        var theta = -1.0 * (Math.PI / 2);
-        var rhoIndex = 0;
-        var thetaIndex;
-
-        var theta0Deg = this._visibleExtent.getSW().lng();
-        var rho0Deg = this._visibleExtent.getNE().lat();
-        var thetaPrimeDeg = this._visibleExtent.getNE().lng();
-        var rhoPrimeDeg = this._visibleExtent.getSW().lat();
-
-        var theta0 = MapSphere.degToRad(theta0Deg);
-        var rho0 = MapSphere.degToRad(rho0Deg);
-        var thetaPrime = MapSphere.degToRad(thetaPrimeDeg);
-        var rhoPrime = MapSphere.degToRad(rhoPrimeDeg);
-
-        var thetaRange = thetaPrime - theta0;
-        var rhoRange = rho0 - rhoPrime;
-
-        //This goes all the way around, so we use 2 pi.
-        var thetaStep = thetaRange / meridians;
-        //This is only half of the circle (north pole to south pole) so we use only 1 times pi.
-        var rhoStep = rhoRange / parallels;
-        var pointsIndex = 0;
-
-        //We don't actually do the last rho step, as that's a single point at the bottom.
-        while (rhoIndex < parallels) {
-
-            thetaIndex = 0;
-
-            var rho = rho0 - (rhoIndex * rhoStep);
-            var rho1 = rho0 - ((rhoIndex + 1) * rhoStep);
-
-            //The conical top and bottom portions have triangles instead of two-triangle trapezoids.
-            if ((rhoIndex == 0 && rho0 == (Math.PI / 2)) || (rhoIndex + 1 == parallels && rhoPrime == (-1.0 * Math.PI / 2))) {
-                
-                var v0, v1, v2;
-
-                var cb = new THREE.Vector3();
-                var ab = new THREE.Vector3();
-
-                //North pole
-                if (rhoIndex == 0) {
-                    //v0 = this.toCartesian(0, rho, 0, false);
-                    v0 = this._ellipsoid.toCartesianWithLngLatElevValues(0, rho, 0, false);
-                    this.addTextureCoordsForVertex(uvs, ((pointsIndex / 3) * 2), rho, 0, rho0, theta0, rhoPrime, thetaPrime);
-                }
-                else {
-                    //south pole
-                    //v0 = this.toCartesian(0, rho1, 0, false);
-                    v0 = this._ellipsoid.toCartesianWithLngLatElevValues(0, rho1, 0, false);
-                    this.addTextureCoordsForVertex(uvs, ((pointsIndex / 3) * 2), rho1, 0, rho0, theta0, rhoPrime, thetaPrime);
-                }
-
-                //Convert to cartesian coords.
-
-
-                for (thetaIndex = 0; thetaIndex < meridians; thetaIndex++) {
-                    theta = (thetaIndex * thetaStep) + theta0;
-                    theta1 = (thetaIndex + 1) * thetaStep + theta0;
-
-                    //If it's the first ring (north pole)
-                    if (rhoIndex == 0) {
-                        v2 = this._ellipsoid.toCartesianWithLngLatElevValues(theta, rho1, 0, false);
-                        v1 = this._ellipsoid.toCartesianWithLngLatElevValues(theta1, rho1, 0, false);
-                        this.addTextureCoordsForVertex(uvs, ((pointsIndex / 3) * 2) + 0, rho, theta, rho0, theta0, rhoPrime, thetaPrime);
-                        this.addTextureCoordsForVertex(uvs, ((pointsIndex / 3) * 2) + 2, rho1, theta1, rho0, theta0, rhoPrime, thetaPrime);
-                        //v2 = this.toCartesian(theta, rho1, 0, false);
-                        //v1 = this.toCartesian(theta1, rho1, 0, false);
-                    }
-                    else {
-                        //Otherwise, assume south pole
-                        v2 = this._ellipsoid.toCartesianWithLngLatElevValues(theta1, rho, 0, false);
-                        v1 = this._ellipsoid.toCartesianWithLngLatElevValues(theta, rho, 0, false);
-                        this.addTextureCoordsForVertex(uvs, ((pointsIndex  / 3) * 2) + 0, rho, theta1, rho0, theta0, rhoPrime, thetaPrime);
-                        this.addTextureCoordsForVertex(uvs, ((pointsIndex  / 3) * 2) + 2, rho, theta, rho0, theta0, rhoPrime, thetaPrime);
-                        //v2 = this.toCartesian(theta1, rho, 0, false);
-                        //1 = this.toCartesian(theta, rho, 0, false);
-                    }
-
-                    var r, g, b;
-                    if ((rhoIndex + thetaIndex) % 2 == 1) {
-                        r = 0.8;
-                        g = 0.8;
-                        b = 0.8;
-                    }
-                    else {
-                        r = 0.6;
-                        g = 0.6;
-                        b = 0.6;
-                    }
-
-                    this.addTriangle(positions, normals, colors, v0, v2, v1, pointsIndex, r, g, b);
-                    pointsIndex += 9;
-                }
-            }
-            else {
-
-                //THis is the normal case, where we'ere not doing a top or a bottom.  In thise case, we actually do two triangles for each step.
-
-                var v0, v1, v2, v3;
-
-                for (thetaIndex = 0; thetaIndex < meridians; thetaIndex++) {
-                    theta = thetaIndex * thetaStep + theta0;
-                    theta1 = (thetaIndex + 1) * thetaStep + theta0;
-
-                    var r, g, b;
-                    if ((rhoIndex + thetaIndex) % 2 == 1) {
-                        r = 0.8;
-                        g = 0.8;
-                        b = 0.8;
-                    }
-                    else {
-                        r = 0.6;
-                        g = 0.6;
-                        b = 0.6;
-                    }
-
-                    v0 = this._ellipsoid.toCartesianWithLngLatElevValues(theta, rho, 0, false);
-                    v1 = this._ellipsoid.toCartesianWithLngLatElevValues(theta1, rho1, 0, false);
-                    v2 = this._ellipsoid.toCartesianWithLngLatElevValues(theta, rho1, 0, false);
-                    v3 = this._ellipsoid.toCartesianWithLngLatElevValues(theta1, rho, 0, false);
-
-                    this.addTriangle(positions, normals, colors, v0, v2, v1, pointsIndex, r, g, b);
-                    this.addTextureCoordsForVertex(uvs, ((pointsIndex / 3) * 2) + 0, rho, theta, rho0, theta0, rhoPrime, thetaPrime);
-                    this.addTextureCoordsForVertex(uvs, ((pointsIndex / 3) * 2) + 2, rho1, theta, rho0, theta0, rhoPrime, thetaPrime);
-                    this.addTextureCoordsForVertex(uvs, ((pointsIndex / 3) * 2) + 4, rho1, theta1, rho0, theta0, rhoPrime, thetaPrime);
-
-                    pointsIndex += 9;
-
-                    this.addTriangle(positions, normals, colors, v0, v1, v3, pointsIndex, r, g, b);
-                    this.addTextureCoordsForVertex(uvs, ((pointsIndex / 3) * 2) + 0, rho, theta, rho0, theta0, rhoPrime, thetaPrime);
-                    this.addTextureCoordsForVertex(uvs, ((pointsIndex / 3) * 2) + 2, rho1, theta1, rho0, theta0, rhoPrime, thetaPrime);
-                    this.addTextureCoordsForVertex(uvs, ((pointsIndex / 3) * 2) + 4, rho, theta1, rho0, theta0, rhoPrime, thetaPrime);
-                    pointsIndex += 9;
-                }
-            }
-
-            rhoIndex++;
-        }
-
-        this._geometry.offsets = [];
-
-        var offsets = triangles / chunkSize;
-
-        for (var i = 0; i < offsets; i++) {
-            var offset = {
-                start: i * chunkSize * 3,
-                index: i * chunkSize * 3,
-                count: Math.min(triangles - (i * chunkSize), chunkSize) * 3
-            };
-
-            this._geometry.offsets.push(offset);
-        }
-
-        this._geometry.computeBoundingSphere();
-
-        var mesh = new THREE.Mesh(this._geometry, this._material);
-
-        mesh.userData.loader = this;
-
-        return mesh;
-
+        
     },
     
     addTextureCoordsForVertex: function(uvs, arrayPosition, rho, theta, rho0, theta0, rhoPrime, thetaPrime)

@@ -303,8 +303,11 @@ MapSphere.MapSphere = MapSphere.UIEventHost.extend({
     //Event handlers for layer events
     handleLayerGeometryChanged: function(args) {
         
-        this.scene.add(args.newMesh);
-        this.scene.remove(args.oldMesh);
+        if (args.oldMesh != args.newMesh)
+        {
+            this.scene.add(args.newMesh);
+            this.scene.remove(args.oldMesh);
+        }
     }
     //end of layer event handlers
 })
