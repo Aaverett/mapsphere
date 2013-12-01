@@ -110,9 +110,9 @@ MapSphere.Layers.Layer = MapSphere.UIEventHost.extend({
         else
         {
             var theta0Deg = this._visibleExtent.getSW().lng();
-            var thetaPrimeDeg = this._visibleExtent.getSW().lat();
-            var rho0Deg = this._visibleExtent.getNE().lng();
-            var rhoPrimeDeg = this._visibleExtent.getNE().lng();
+            var thetaPrimeDeg = this._visibleExtent.getNE().lng();
+            var rho0Deg = this._visibleExtent.getSW().lat();
+            var rhoPrimeDeg = this._visibleExtent.getNE().lat();
 
             //If the root geometry node hasn't been updated, 
             var theta0 = MapSphere.degToRad(theta0Deg);
@@ -121,6 +121,7 @@ MapSphere.Layers.Layer = MapSphere.UIEventHost.extend({
             var rhoPrime = MapSphere.degToRad(rhoPrimeDeg);
 
             //Instruct the root node that it needs to update the geometry in the appropriate zone, if applicable.
+            this._geometryRootNode.enhanceExtent(theta0, thetaPrime, rho0, rhoPrime);
         }
 
         return this._geometryRootNode.getMesh();

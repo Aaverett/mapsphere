@@ -13,6 +13,7 @@
     _material: null,
 
     _mesh: null,
+    _bMesh: null,
 
     _enhancedNodeCount: 0,
 
@@ -145,10 +146,17 @@
 
         this._geometry.computeBoundingSphere();
 
+        //If a mesh already exists, remove it from the scene graph
+        if (this._bMesh != null)
+        {
+            this._mesh.remove(this._bMesh);
+        }
 
-        var mesh = new THREE.Mesh(this._geometry, this._material);
+        //Create a new mesh...
+        this._bMesh = new THREE.Mesh(this._geometry, this._material);
 
-        this._mesh.add(mesh);
+        //Add the new mesh to the scene graph
+        this._mesh.add(this._bMesh);
     },
     
     _addTriangle: function(v0, v1, v2, pointsIndex, r, g, b)
@@ -200,10 +208,74 @@
         colors[pointsIndex + 8] = b;
     },
 
-    enhanceExtent: function(extent)
+    enhanceExtent: function(theta0, thetaPrime, rho0, rhoPrime)
     {
+        var maxTheta, minTheta, maxRho, minRho;
 
+        maxTheta = this._maxTheta;
+        minTheta = this._minTheta;
+        maxRho = this._maxRho;
+        minRho = this._minRho;
+
+        if (minTheta > maxTheta)
+        {
+            maxThetaewzaa
+        }
+         
+        var newThetaSpan = thetaPrime - theta0;
+        var newRhoSpan = rhoPrime - rho0;
+
+        var thetaSpan = Math.abs(this._maxTheta - this._minTheta);
+        var rhoSpan = Math.abs(this._maxRho - this._minRho);
+
+        //First, we need to figure out which polys we're actually replacing.
+        if(newThetaSpan <= (thetaSpan * 0.5) || newRhoSpan <= (rhoSpan * 0.5))
+        {
+            var thetaStep = thetaSpan / this._steps;
+            var rhoStep = rhoSpan / this._steps;
+
+            var thetaIndex0 = Math.abs(Math.floor(theta0 / thetaStep));
+            var thetaIndex1 = Math.abs(Math.ceil(thetaPrime / thetaStep));
+
+            var rhoIndex0 = Math.abs(Math.floor(rho0 / rhoStep));
+            var rhoIndex1 = Math.abs(Math.ceil(rhoPrime / rhoStep));
+            
+            //Reverse the indices if they're backwards.
+            if (thetaIndex0 > thetaIndex1)
+            {
+                var tempTI = thetaIndex0;
+                thetaIndex0 = thetaIndex1;
+                thetaIndex1 = tempTI;
+            }
+
+            if (rhoIndex0 > rhoIndex1)
+            {
+                var tempRI = rhoIndex0;
+                rhoIndex0 = rhoIndex1;
+                rhoIndex1 = tempRI;
+            }
+
+            //Now, create a new node in the child index in question.
+            for (var i = rhoIndex0; i <= rhoIndex1; i++) {
+                var tileMinRho = i * rhoStep;
+                var tileMaxRho = (i + 1) * rhoStep;
+
+                for (var j = thetaIndex0; j <= thetaIndex1; j++) {
+                    //init: function(parent, minTheta, maxTheta, minRho, maxRho, ellipsoid, steps, altitude, material)
+                    var tileMinTheta = j * thetaStep;
+                    var tileMaxTheta = (j + 1) * thetaStep;
+
+                    this._childNodes[i][j] = new MapSphere.Math.DetailTreeNode(this, tileMinTheta, tileMaxTheta, tileMinRho, tileMaxRho, this._ellipsoid, this._steps, this._material);
+
+                    this._mesh.add(this._childNodes[i][j].getMesh());
+                }
+            }
+
+            this.refreshGeometry();
+        }
     },
+
+  
 
     simplifyExtent: function(extent)
     {
