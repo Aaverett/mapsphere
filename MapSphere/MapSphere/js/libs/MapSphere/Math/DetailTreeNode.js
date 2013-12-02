@@ -16,6 +16,7 @@
     _bMesh: null,
 
     _enhancedNodeCount: 0,
+    _lodAggression: 2,
 
     init: function(parent, minTheta, maxTheta, minRho, maxRho, ellipsoid, steps, altitude, material)
     {
@@ -229,27 +230,32 @@
         var rhoSpan = Math.abs(this._maxRho - this._minRho);
 
         //First, we need to figure out which polys we're actually replacing.
-        if(newThetaSpan <= (thetaSpan * 0.5) || newRhoSpan <= (rhoSpan * 0.5))
-        {
-            var thetaStep = thetaSpan / this._steps;
-            var rhoStep = rhoSpan / this._steps;
+        var thetaStep = thetaSpan / this._steps;
+        var rhoStep = rhoSpan / this._steps;
 
-            var thetaIndex0 = Math.abs(Math.floor(theta0 / thetaStep));
-            var thetaIndex1 = Math.abs(Math.ceil(thetaPrime / thetaStep));
+        var thetaIndex0 = Math.abs(Math.floor((this._minTheta - theta0) / thetaStep));
+        var thetaIndex1 = Math.abs(Math.ceil((this._minTheta - thetaPrime) / thetaStep));
 
-            var rhoIndex0 = Math.abs(Math.floor(rho0 / rhoStep));
-            var rhoIndex1 = Math.abs(Math.ceil(rhoPrime / rhoStep));
+        var rhoIndex0 = Math.abs(Math.floor(rho0 / rhoStep));
+        var rhoIndex1 = Math.abs(Math.ceil(rhoPrime / rhoStep));
             
-            //Reverse the indices if they're backwards.
-            if (thetaIndex0 > thetaIndex1)
-            {
-                var tempTI = thetaIndex0;
-                thetaIndex0 = thetaIndex1;
-                thetaIndex1 = tempTI;
-            }
+        var phantomThetaIndex1 = thetaIndex1;
+        var thetaIndexSpan;
+        var rhoIndexSpan = rhoIndex1 - rhoIndex0;
+        if (phantomThetaIndex1 < thetaIndex0)
+        {
+            phantomThetaIndex1 += this._steps;
+        }
 
-            if (rhoIndex0 > rhoIndex1)
-            {
+        thetaIndexSpan = phantomThetaIndex1 - thetaIndex0;
+
+        //Now, we check to see if our extent has changed sufficiently to be enhanced at our set state of aggression.
+        if (rhoIndexSpan <= this._lodAggression && thetaIndexSpan <= this._lodAggression) {
+
+ 
+
+            //The rho indices don't wrap around, so we just reverse them if 
+            if (rhoIndex0 > rhoIndex1) {
                 var tempRI = rhoIndex0;
                 rhoIndex0 = rhoIndex1;
                 rhoIndex1 = tempRI;
@@ -260,19 +266,29 @@
                 var tileMinRho = i * rhoStep;
                 var tileMaxRho = (i + 1) * rhoStep;
 
-                for (var j = thetaIndex0; j <= thetaIndex1; j++) {
+                for (var j = 0; j <= thetaIndexSpan; j++) {
+
+                    var curThetaIdx = thetaIndex0 + j;
+
+                    //wrap the current index back around to zero if it crosses the prime meridian.
+                    if (curThetaIdx >= this._steps)
+                    {
+                        curThetaIdx -= this._steps;
+                    }
+
                     //init: function(parent, minTheta, maxTheta, minRho, maxRho, ellipsoid, steps, altitude, material)
-                    var tileMinTheta = j * thetaStep;
-                    var tileMaxTheta = (j + 1) * thetaStep;
+                    var tileMinTheta = curThetaIdx * thetaStep;
+                    var tileMaxTheta = (curThetaIdx + 1) * thetaStep;
 
-                    this._childNodes[i][j] = new MapSphere.Math.DetailTreeNode(this, tileMinTheta, tileMaxTheta, tileMinRho, tileMaxRho, this._ellipsoid, this._steps, this._material);
+                    this._childNodes[i][curThetaIdx] = new MapSphere.Math.DetailTreeNode(this, tileMinTheta, tileMaxTheta, tileMinRho, tileMaxRho, this._ellipsoid, this._steps, this._material);
 
-                    this._mesh.add(this._childNodes[i][j].getMesh());
+                    this._mesh.add(this._childNodes[i][curThetaIdx].getMesh());
                 }
             }
 
             this.refreshGeometry();
         }
+        
     },
 
   
