@@ -20,6 +20,7 @@
 
     init: function(parent, minTheta, maxTheta, minRho, maxRho, ellipsoid, steps, altitude, material)
     {
+        this._parentNode = parent;
         this._altitude = altitude;
         //this._texInfo = texInfo;
         this._material = material;
@@ -103,28 +104,29 @@
             {
                 var nextTheta = curTheta + thetaStep;
                 
+                //Each quadrangle can be enhanced with a child node.  If it is enhanced, we don't display it here, as that would interpenetrate
+                if (this._childNodes[i][j] == undefined || this._childNodes[i][j] == null) {
 
-                var v0 = this._ellipsoid.toCartesianWithLngLatElevValues(curTheta, curRho, this._altitude, false);
-                var v1 = this._ellipsoid.toCartesianWithLngLatElevValues(nextTheta, curRho, this._altitude, false);
-                var v2 = this._ellipsoid.toCartesianWithLngLatElevValues(curTheta, nextRho, this._altitude, false);
-                var v3 = this._ellipsoid.toCartesianWithLngLatElevValues(nextTheta, nextRho, this._altitude, false);
+                    var v0 = this._ellipsoid.toCartesianWithLngLatElevValues(curTheta, curRho, this._altitude, false);
+                    var v1 = this._ellipsoid.toCartesianWithLngLatElevValues(nextTheta, curRho, this._altitude, false);
+                    var v2 = this._ellipsoid.toCartesianWithLngLatElevValues(curTheta, nextRho, this._altitude, false);
+                    var v3 = this._ellipsoid.toCartesianWithLngLatElevValues(nextTheta, nextRho, this._altitude, false);
 
-                var r, g, b;
+                    var r, g, b;
 
-                if (pointIndex % 2)
-                {
-                    r = g = b = 0.6;
+                    if ((pointIndex / 18) % 2) {
+                        r = g = b = 0.6;
+                    }
+                    else {
+                        r = g = b = 0.8;
+                    }
+
+                    this._addTriangle(v2, v1, v0, pointIndex, r, g, b);
+                    pointIndex += 9;
+
+                    this._addTriangle(v2, v3, v1, pointIndex, r, g, b);
+                    pointIndex += 9;
                 }
-                else
-                {
-                    r = g = b = 0.8;
-                }
-
-                this._addTriangle(v2, v1, v0, pointIndex, r, g, b);
-                pointIndex += 9;
-                
-                this._addTriangle(v2, v3, v1, pointIndex, r, g, b);
-                pointIndex += 9;
 
                 curTheta = nextTheta;
             }
@@ -236,9 +238,16 @@
         var thetaIndex0 = Math.abs(Math.floor((this._minTheta - theta0) / thetaStep));
         var thetaIndex1 = Math.abs(Math.ceil((this._minTheta - thetaPrime) / thetaStep));
 
-        var rhoIndex0 = Math.abs(Math.floor(rho0 / rhoStep));
-        var rhoIndex1 = Math.abs(Math.ceil(rhoPrime / rhoStep));
+        var rhoIndex0 = Math.abs(Math.floor((this._minRho - rho0) / rhoStep));
+        var rhoIndex1 = Math.abs(Math.ceil((this._minRho - rhoPrime) / rhoStep));
             
+        //The rho indices don't wrap around, so we just reverse them if 
+        if (rhoIndex0 > rhoIndex1) {
+            var tempRI = rhoIndex0;
+            rhoIndex0 = rhoIndex1;
+            rhoIndex1 = tempRI;
+        }
+
         var phantomThetaIndex1 = thetaIndex1;
         var thetaIndexSpan;
         var rhoIndexSpan = rhoIndex1 - rhoIndex0;
@@ -251,15 +260,6 @@
 
         //Now, we check to see if our extent has changed sufficiently to be enhanced at our set state of aggression.
         if (rhoIndexSpan <= this._lodAggression && thetaIndexSpan <= this._lodAggression) {
-
- 
-
-            //The rho indices don't wrap around, so we just reverse them if 
-            if (rhoIndex0 > rhoIndex1) {
-                var tempRI = rhoIndex0;
-                rhoIndex0 = rhoIndex1;
-                rhoIndex1 = tempRI;
-            }
 
             //Now, create a new node in the child index in question.
             for (var i = rhoIndex0; i <= rhoIndex1; i++) {
@@ -280,9 +280,12 @@
                     var tileMinTheta = curThetaIdx * thetaStep;
                     var tileMaxTheta = (curThetaIdx + 1) * thetaStep;
 
-                    this._childNodes[i][curThetaIdx] = new MapSphere.Math.DetailTreeNode(this, tileMinTheta, tileMaxTheta, tileMinRho, tileMaxRho, this._ellipsoid, this._steps, this._material);
+                    this._childNodes[i][curThetaIdx] = new MapSphere.Math.DetailTreeNode(this, tileMinTheta, tileMaxTheta, tileMinRho, tileMaxRho, this._ellipsoid, this._steps, this._altitude, this._material);
 
                     this._mesh.add(this._childNodes[i][curThetaIdx].getMesh());
+
+                    //Increment the enhanced node count.
+                    this._enhancedNodeCount++;
                 }
             }
 
