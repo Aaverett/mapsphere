@@ -101,11 +101,11 @@ MapSphere.Layers.Layer = MapSphere.UIEventHost.extend({
         {
             //If the root geometry node hasn't been updated, 
             var theta0 = MapSphere.degToRad(-180);
-            var rho0 = MapSphere.degToRad(90);
+            var rho0 = MapSphere.degToRad(-90);
             var thetaPrime = MapSphere.degToRad(180);
-            var rhoPrime = MapSphere.degToRad(-90);
+            var rhoPrime = MapSphere.degToRad(90);
 
-            this._geometryRootNode = new MapSphere.Math.DetailTreeNode(null, theta0, thetaPrime, rho0, rhoPrime, this._ellipsoid, 64, 0, this._material);
+            this._geometryRootNode = new MapSphere.Math.DetailTreeNode(null, theta0, thetaPrime, rho0, rhoPrime, this._ellipsoid, 32, 0, this._material);
         }
         else
         {
@@ -124,9 +124,7 @@ MapSphere.Layers.Layer = MapSphere.UIEventHost.extend({
             this._geometryRootNode.enhanceExtent(theta0, thetaPrime, rho0, rhoPrime);
         }
 
-        return this._geometryRootNode.getMesh();
-
-        
+        return this._geometryRootNode.getMesh();        
     },
     
     addTextureCoordsForVertex: function(uvs, arrayPosition, rho, theta, rho0, theta0, rhoPrime, thetaPrime)

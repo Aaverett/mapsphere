@@ -13,6 +13,10 @@ window.MapSphere = {
     scriptBasePath: "js/libs/MapSphere/"
 };
 
+//Set up the debugging business.
+MapSphere.DEBUG = false;
+MapSphere.debugPane = null;
+
 //This is the set of scripts that will need to be loaded.  I'm borrowing this idea from OpenLayers
 MapSphere.scriptFiles =
     [

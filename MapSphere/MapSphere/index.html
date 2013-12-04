@@ -16,6 +16,9 @@
         var map, layer, ms;
 
         function doInit() {
+            //Enable mapSphere's debugging features.
+            MapSphere.DEBUG = true;
+
             var options = { doTestGeometry: false};
 
             ms = new MapSphere.MapSphere($("#map"), options);

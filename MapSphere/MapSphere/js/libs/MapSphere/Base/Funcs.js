@@ -74,3 +74,53 @@ MapSphere.stackTextures = function(textures)
     return finalTex;
     
 }
+
+MapSphere.updateDebugOutput = function(labelname, message)
+{
+    //Check if the debug pane exists
+    if(MapSphere.debugPane == null)
+    {
+        //If not, create it.
+        MapSphere.createDebugPane();
+    }
+
+    //Does that label exist?
+    if(MapSphere.debugPane.data("labels")[labelname] == undefined)
+    {
+        //No?  Create it.
+
+        var container = $("<div id=\"#label_" + labelname + "\"></div>");
+
+        var label = $("<span id=\"label_" + labelname + "_label\" style=\"padding: 5px;\">" + labelname + "</span>");
+        var value = $("<span id=\"label_" + labelname + "_message\"></span>");
+
+        container.append(label);
+        container.append(value);
+
+        MapSphere.debugPane.append(container);
+
+        MapSphere.debugPane.data("labels")[labelname] = container;
+    }
+
+
+    MapSphere.debugPane.data("labels")[labelname].children("#label_" + labelname + "_message").text(message);
+
+}
+
+MapSphere.createDebugPane = function()
+{
+    if(MapSphere.debugPane == null)
+    {
+        var debugPane = $("<div class=\"mapSphereDebugPane\" title=\"MapSphere Debug Pane\"></div>");
+        
+        var b = $("document.body");
+
+        b.append(debugPane);
+
+        debugPane.dialog();
+
+        debugPane.data("labels", new Array());
+
+        MapSphere.debugPane = debugPane;
+    }
+}

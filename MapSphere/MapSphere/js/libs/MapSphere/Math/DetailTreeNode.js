@@ -11,12 +11,14 @@
     _steps: null,
     _altitude: 0,
     _material: null,
+    _active: true,
+    _maxDepth: 6,
 
     _mesh: null,
     _bMesh: null,
 
     _enhancedNodeCount: 0,
-    _lodAggression: 2,
+    _lodAggression: 4,
 
     init: function(parent, minTheta, maxTheta, minRho, maxRho, ellipsoid, steps, altitude, material)
     {
@@ -94,12 +96,16 @@
         var pointIndex = 0;
         var uvIndex = 0;
 
-        var curTheta = this._minTheta;
+        
         var curRho = this._minRho;
+
+        var alternateColorCounter = 0;
 
         for(var i=0; i < this._steps; i++)
         {
+            var curTheta = this._minTheta;
             var nextRho = curRho + rhoStep;
+
             for(var j=0; j < this._steps; j++)
             {
                 var nextTheta = curTheta + thetaStep;
@@ -114,23 +120,26 @@
 
                     var r, g, b;
 
-                    if ((pointIndex / 18) % 2) {
+                    if (alternateColorCounter % 2) {
                         r = g = b = 0.6;
                     }
                     else {
                         r = g = b = 0.8;
                     }
 
-                    this._addTriangle(v2, v1, v0, pointIndex, r, g, b);
+                    this._addTriangle(v2, v0, v1, pointIndex, r, g, b);
                     pointIndex += 9;
 
-                    this._addTriangle(v2, v3, v1, pointIndex, r, g, b);
+                    this._addTriangle(v2, v1, v3, pointIndex, r, g, b);
                     pointIndex += 9;
                 }
 
                 curTheta = nextTheta;
+                alternateColorCounter++;
             }
             curRho = nextRho;
+
+            alternateColorCounter++;
         }
 
         this._geometry.offsets = [];
@@ -213,88 +222,139 @@
 
     enhanceExtent: function(theta0, thetaPrime, rho0, rhoPrime)
     {
-        var maxTheta, minTheta, maxRho, minRho;
-
-        maxTheta = this._maxTheta;
-        minTheta = this._minTheta;
-        maxRho = this._maxRho;
-        minRho = this._minRho;
-
-        if (minTheta > maxTheta)
+        //Make copies of the extent values...
+        var workingTheta0, workingThetaPrime, workingRho0, workingRhoPrime;
+        workingTheta0 = theta0;
+        workingThetaPrime = thetaPrime;
+        workingRho0 = rho0;
+        workingRhoPrime = rhoPrime;
+        
+        if (theta0 < this._minTheta)
         {
-            maxThetaewzaa
-        }
-         
-        var newThetaSpan = thetaPrime - theta0;
-        var newRhoSpan = rhoPrime - rho0;
-
-        var thetaSpan = Math.abs(this._maxTheta - this._minTheta);
-        var rhoSpan = Math.abs(this._maxRho - this._minRho);
-
-        //First, we need to figure out which polys we're actually replacing.
-        var thetaStep = thetaSpan / this._steps;
-        var rhoStep = rhoSpan / this._steps;
-
-        var thetaIndex0 = Math.abs(Math.floor((this._minTheta - theta0) / thetaStep));
-        var thetaIndex1 = Math.abs(Math.ceil((this._minTheta - thetaPrime) / thetaStep));
-
-        var rhoIndex0 = Math.abs(Math.floor((this._minRho - rho0) / rhoStep));
-        var rhoIndex1 = Math.abs(Math.ceil((this._minRho - rhoPrime) / rhoStep));
-            
-        //The rho indices don't wrap around, so we just reverse them if 
-        if (rhoIndex0 > rhoIndex1) {
-            var tempRI = rhoIndex0;
-            rhoIndex0 = rhoIndex1;
-            rhoIndex1 = tempRI;
+            workingTheta0 = this._minTheta;
         }
 
-        var phantomThetaIndex1 = thetaIndex1;
-        var thetaIndexSpan;
-        var rhoIndexSpan = rhoIndex1 - rhoIndex0;
-        if (phantomThetaIndex1 < thetaIndex0)
+        if (thetaPrime > this._maxTheta)
         {
-            phantomThetaIndex1 += this._steps;
+            workingThetaPrime = this._maxTheta;
         }
 
-        thetaIndexSpan = phantomThetaIndex1 - thetaIndex0;
+        if (rho0 < this._minRho)
+        {
+            workingRho0 = this._minRho;
+        }
 
-        //Now, we check to see if our extent has changed sufficiently to be enhanced at our set state of aggression.
-        if (rhoIndexSpan <= this._lodAggression && thetaIndexSpan <= this._lodAggression) {
+        if (rhoPrime > this._maxRho)
+        {
+            workingRhoPrime = this._maxRho;
+        }
 
-            //Now, create a new node in the child index in question.
-            for (var i = rhoIndex0; i <= rhoIndex1; i++) {
-                var tileMinRho = i * rhoStep;
-                var tileMaxRho = (i + 1) * rhoStep;
 
-                for (var j = 0; j <= thetaIndexSpan; j++) {
+        var thetaStep = (this._maxTheta - this._minTheta) / this._steps;
+        var rhoStep = (this._maxRho - this._minRho) / this._steps;
 
-                    var curThetaIdx = thetaIndex0 + j;
+        var startIndexTheta = Math.floor((workingTheta0 - this._minTheta) / thetaStep);
+        var stopIndexTheta = Math.floor((workingThetaPrime - this._minTheta) / thetaStep);
 
-                    //wrap the current index back around to zero if it crosses the prime meridian.
-                    if (curThetaIdx >= this._steps)
+        var startIndexRho = Math.floor((workingRho0 - this._minRho) / rhoStep);
+        var stopIndexRho = Math.floor((workingRhoPrime - this._minRho) / rhoStep);
+
+        //Constrain the indices to the bounds of our child arrays.
+        if (startIndexRho < 0) startIndexRho = 0;
+        if (stopIndexRho >= this._steps) stopIndexRho = this._steps - 1;
+
+        if (startIndexTheta < 0) startIndexTheta = 0;
+        if (stopIndexTheta >= this._steps) stopIndexTheta = this._steps - 1;
+
+        var rhoIndexSpan = stopIndexRho - startIndexRho;
+        var thetaIndexSpan = stopIndexTheta - startIndexTheta;
+        
+        var needUpdate = false;
+
+        //is the visible area smaller than the aggression value?
+        if(this.getCurrentDepth() < this._maxDepth && ( rhoIndexSpan <= this._lodAggression || thetaIndexSpan <= this._lodAggression))
+        {
+            for (var i = startIndexRho; i <= stopIndexRho; i++)
+            {
+                for (var j = startIndexTheta; j <= stopIndexTheta; j++)
+                {
+                    //If the child node doesn't exist at this index, create it.
+                    if (!MapSphere.notNullNotUndef(this._childNodes[i][j]))
                     {
-                        curThetaIdx -= this._steps;
+                        this._addChildNode(j, i);
+
+                        //Add child node is deterministic, so we know for sure that a node will get added.  We therefore need to update our local geometry.
+                        needUpdate = true;
                     }
 
-                    //init: function(parent, minTheta, maxTheta, minRho, maxRho, ellipsoid, steps, altitude, material)
-                    var tileMinTheta = curThetaIdx * thetaStep;
-                    var tileMaxTheta = (curThetaIdx + 1) * thetaStep;
-
-                    this._childNodes[i][curThetaIdx] = new MapSphere.Math.DetailTreeNode(this, tileMinTheta, tileMaxTheta, tileMinRho, tileMaxRho, this._ellipsoid, this._steps, this._altitude, this._material);
-
-                    this._mesh.add(this._childNodes[i][curThetaIdx].getMesh());
-
-                    //Increment the enhanced node count.
-                    this._enhancedNodeCount++;
+                    //Tell the child node to enhance itself.
+                    this._childNodes[i][j].enhanceExtent(theta0, thetaPrime, rho0, rhoPrime);
+                    
                 }
             }
 
+            
+        }
+        else
+        {
+            for(var i = startIndexRho; i <= stopIndexRho; i++)
+            {
+                for(var j = startIndexTheta; j <= stopIndexTheta; j++)
+                {
+                    //Attempt to kill the child node.  This will return true if a node is actually removed.
+                    if(this._killChildNode(j, i))
+                    {
+                        needUpdate = true;
+                    }                   
+                }
+            }
+        }
+
+        //If any nodes were added or removed, we need to update.
+        if (needUpdate) {
             this.refreshGeometry();
         }
-        
     },
 
-  
+    _addChildNode: function(thetaIndex, rhoIndex)
+    {
+        var minTheta, maxTheta, minRho, maxRho;
+
+        var thetaStep = (this._maxTheta - this._minTheta) / this._steps;
+        var rhoStep = (this._maxRho - this._minRho) / this._steps;
+
+        minTheta = this._minTheta + (thetaIndex * thetaStep);
+        maxTheta = this._minTheta + (thetaIndex + 1) * thetaStep;
+        minRho = this._minRho + (rhoIndex * rhoStep);
+        maxRho = this._minRho + ((rhoIndex + 1) * rhoStep);
+
+        var childNode = new MapSphere.Math.DetailTreeNode(this, minTheta, maxTheta, minRho, maxRho, this._ellipsoid, this._steps, this._altitude, this._material);
+
+        this._childNodes[rhoIndex][thetaIndex] = childNode;
+
+        this._mesh.add(childNode.getMesh());
+
+        this._enhancedNodeCount++;
+    },
+
+    _killChildNode: function(thetaIndex, rhoIndex)
+    {
+        var needUpdate = false;
+
+        if(MapSphere.notNullNotUndef(this._childNodes[rhoIndex]) && MapSphere.notNullNotUndef(this._childNodes[rhoIndex][thetaIndex]))
+        {
+            var childNode = this._childNodes[rhoIndex][thetaIndex];
+
+            this._mesh.remove(childNode.getMesh());
+            this._enhancedNodeCount--;
+
+            this._childNodes[rhoIndex][thetaIndex] = null;
+
+            needUpdate = true;
+        }
+
+        return needUpdate;
+    },
 
     simplifyExtent: function(extent)
     {
@@ -304,5 +364,18 @@
     getMesh: function()
     {
         return this._mesh;
+    },
+
+    getCurrentDepth: function()
+    {
+        var ret = 0;
+
+        if(this._parentNode != null)
+        {
+            ret = this._parentNode.getCurrentDepth();
+            ret += 1;
+        }
+
+        return ret;
     }
 });

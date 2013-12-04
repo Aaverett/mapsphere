@@ -128,6 +128,14 @@ MapSphere.CameraControllers.OrbitCameraController = MapSphere.CameraControllers.
 
         this.cameraMoved();
 
+        //Display the position in the debug pane, if applicable.
+        if(MapSphere.DEBUG)
+        {
+            MapSphere.updateDebugOutput("orbitcam_theta", MapSphere.degToRad(lon));
+            MapSphere.updateDebugOutput("orbitcam_rho", MapSphere.degToRad(lat));
+            MapSphere.updateDebugOutput("orbitcam_alt", alt);
+        }
+
         //this.panToCoords(lngLatElev.lng(), lngLatElev.lat(), lngLatElev.elev());
     },
 

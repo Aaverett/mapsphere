@@ -34,6 +34,8 @@ MapSphere.MapSphere = MapSphere.UIEventHost.extend({
 
     _visibleExtent: null,
 
+    _cameraDoneMovingWait: 1000,
+
     //Constructor
     init: function (targetElement, options) {
         if (MapSphere.notNullNotUndef(options)) {
@@ -226,7 +228,7 @@ MapSphere.MapSphere = MapSphere.UIEventHost.extend({
 
         this._visibleExtent = args.extent;
 
-        this.cameraDoneMovingTimer = window.setTimeout(this.handleCameraDoneMovingTimeout.bind(this), 2000);
+        this.cameraDoneMovingTimer = window.setTimeout(this.handleCameraDoneMovingTimeout.bind(this), this._cameraDoneMovingWait);
     },
 
     handleCameraDoneMovingTimeout: function (args) {
