@@ -8,7 +8,7 @@ MapSphere.Decorations.StaticTextureDecoration = MapSphere.Decorations.Decoration
     init: function (options)
     {
         //Do the base class initialization.
-        this._super();
+        this._super(options);
 
 
         if(MapSphere.notNullNotUndef(options.texturePath))

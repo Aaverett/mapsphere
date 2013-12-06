@@ -147,11 +147,11 @@
                     this._addTriangle(v2, v0, v1, pointIndex, r, g, b);
                     pointIndex += 9;
                     
-                    this._setUVsForFace(uvIndex, curTheta, nextTheta, curRho, nextRho);
-                    uvIndex += 12;
-
                     this._addTriangle(v2, v1, v3, pointIndex, r, g, b);
                     pointIndex += 9;
+
+                    this._setUVsForFace(uvIndex, curTheta, nextTheta, curRho, nextRho);
+                    uvIndex += 12;
                 }
 
                 curTheta = nextTheta;
@@ -242,7 +242,33 @@
 
     _setUVsForFace: function(uvIndex, curTheta, nextTheta, curRho, nextRho)
     {
+        var thetaSpan = this._maxTheta - this._minTheta;
+        var rhoSpan = this._maxRho - this._minRho;
 
+        var v0u, v0v, v1u, v1v, v2u, v2v, v3u, v3v;
+        v0u = (curTheta - this._minTheta) / thetaSpan;
+        v0v = (curRho - this._minRho) / rhoSpan;
+        v1u = (nextTheta - this._minTheta) / thetaSpan;
+        v1v = (curRho - this._minRho) / rhoSpan;
+        v2u = (curTheta - this._minTheta) / thetaSpan;
+        v2v = (nextRho - this._minRho) / rhoSpan;
+        v3u = (nextTheta - this._minTheta) / thetaSpan;
+        v3v = (nextRho - this._minRho) / rhoSpan;
+
+        var uvs = this._geometry.attributes.uv.array;
+        uvs[uvIndex + 0] = v2u;
+        uvs[uvIndex + 1] = v2v;
+        uvs[uvIndex + 2] = v0u;
+        uvs[uvIndex + 3] = v0v;
+        uvs[uvIndex + 4] = v1u;
+        uvs[uvIndex + 5] = v1v;
+
+        uvs[uvIndex + 6] = v2u;
+        uvs[uvIndex + 7] = v2v;
+        uvs[uvIndex + 8] = v1u;
+        uvs[uvIndex + 9] = v1v;
+        uvs[uvIndex + 10] = v3u;
+        uvs[uvIndex + 11] = v3v;
     },
 
     enhanceExtent: function(theta0, thetaPrime, rho0, rhoPrime)
