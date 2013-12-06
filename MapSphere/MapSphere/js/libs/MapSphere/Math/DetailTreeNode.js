@@ -11,6 +11,8 @@
     _steps: null,
     _altitude: 0,
     _material: null,
+    _usingParentMaterial: true,
+    _texture: null,
     _active: true,
     _maxDepth: 6,
 
@@ -19,19 +21,19 @@
 
     _enhancedNodeCount: 0,
     _lodAggression: 4,
+    _decorations: null,
 
-    init: function(parent, minTheta, maxTheta, minRho, maxRho, ellipsoid, steps, altitude, material)
+    init: function(parent, minTheta, maxTheta, minRho, maxRho, ellipsoid, steps, altitude, decorations)
     {
         this._parentNode = parent;
         this._altitude = altitude;
-        //this._texInfo = texInfo;
-        this._material = material;
         this._steps = steps;
         this._minTheta = minTheta;
         this._maxTheta = maxTheta;
         this._minRho = minRho;
         this._maxRho = maxRho;
         this._ellipsoid = ellipsoid;
+        this._decorations = decorations;
 
         this._childNodes = new Array(steps);
 
@@ -43,8 +45,23 @@
         //Create the mesh container that contains 
         this._mesh = new THREE.Object3D();
 
+        //Inherit or create the material...
+        if (this._parentNode != null)
+        {
+            this._material = this._parentNode.getMaterial();
+            this._usingParentMaterial = true;
+        }
+        else
+        {
+            this._material = new THREE.MeshLambertMaterial({vertexColors: THREE.VertexColors});
+            this._usingParentMaterial = false;
+        }
+
         //Build the geometry.
         this.refreshGeometry();
+
+        //Load the texture(s)
+        this.updateTextures();
     },
 
     //Creates the geometry for this object.
@@ -129,6 +146,9 @@
 
                     this._addTriangle(v2, v0, v1, pointIndex, r, g, b);
                     pointIndex += 9;
+                    
+                    this._setUVsForFace(uvIndex, curTheta, nextTheta, curRho, nextRho);
+                    uvIndex += 12;
 
                     this._addTriangle(v2, v1, v3, pointIndex, r, g, b);
                     pointIndex += 9;
@@ -218,6 +238,11 @@
         colors[pointsIndex + 6] = r;
         colors[pointsIndex + 7] = g;
         colors[pointsIndex + 8] = b;
+    },
+
+    _setUVsForFace: function(uvIndex, curTheta, nextTheta, curRho, nextRho)
+    {
+
     },
 
     enhanceExtent: function(theta0, thetaPrime, rho0, rhoPrime)
@@ -328,7 +353,7 @@
         minRho = this._minRho + (rhoIndex * rhoStep);
         maxRho = this._minRho + ((rhoIndex + 1) * rhoStep);
 
-        var childNode = new MapSphere.Math.DetailTreeNode(this, minTheta, maxTheta, minRho, maxRho, this._ellipsoid, this._steps, this._altitude, this._material);
+        var childNode = new MapSphere.Math.DetailTreeNode(this, minTheta, maxTheta, minRho, maxRho, this._ellipsoid, this._steps, this._altitude, this._decorations);
 
         this._childNodes[rhoIndex][thetaIndex] = childNode;
 
@@ -377,5 +402,37 @@
         }
 
         return ret;
+    },
+
+    getMaterial: function()
+    {
+        return this._material;
+    },
+
+    updateTextures: function()
+    {
+        var textures = new Array();
+
+        //Compose an array of all the textures to be blended.
+        for (var i = 0; i < this._decorations.length; i++) {
+            var dec = this._decorations[i];
+
+            var decTex = dec.getTextures();
+
+            for (var j = 0; j < decTex.length; j++) {
+                textures.push(decTex[j]);
+            }
+        }
+
+        //Now, we need to blend the images together.
+        var blendedTexture = MapSphere.stackTextures(textures);
+        this._texture = blendedTexture;
+        
+
+        this._material = new THREE.MeshLambertMaterial({map: this._texture});
+
+        this._mesh.material = this._material;
+
+        return;
     }
 });

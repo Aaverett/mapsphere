@@ -105,7 +105,7 @@ MapSphere.Layers.Layer = MapSphere.UIEventHost.extend({
             var thetaPrime = MapSphere.degToRad(180);
             var rhoPrime = MapSphere.degToRad(90);
 
-            this._geometryRootNode = new MapSphere.Math.DetailTreeNode(null, theta0, thetaPrime, rho0, rhoPrime, this._ellipsoid, 32, 0, this._material);
+            this._geometryRootNode = new MapSphere.Math.DetailTreeNode(null, theta0, thetaPrime, rho0, rhoPrime, this._ellipsoid, 32, 0, this._decorations);
         }
         else
         {
@@ -141,55 +141,12 @@ MapSphere.Layers.Layer = MapSphere.UIEventHost.extend({
         uvs[arrayPosition + 1] = v;
     },
 
-    //Adds a triangle to the buffer geometry at the given index.
-    addTriangle: function (positions, normals, colors, v0, v1, v2, pointsIndex, r, g, b) {
-        var ab = new THREE.Vector3();
-        var cb = new THREE.Vector3();
-
-        positions[pointsIndex] = v0.x;
-        positions[pointsIndex + 1] = v0.y;
-        positions[pointsIndex + 2] = v0.z;
-        positions[pointsIndex + 3] = v1.x;
-        positions[pointsIndex + 4] = v1.y;
-        positions[pointsIndex + 5] = v1.z;
-        positions[pointsIndex + 6] = v2.x;
-        positions[pointsIndex + 7] = v2.y;
-        positions[pointsIndex + 8] = v2.z;
-
-        //Now, compute the normals.
-        cb.subVectors(v2, v1);
-        ab.subVectors(v0, v1);
-        cb.cross(ab);
-
-        cb.normalize();
-
-        normals[pointsIndex] = cb.x;
-        normals[pointsIndex + 1] = cb.y;
-        normals[pointsIndex + 2] = cb.z;
-        normals[pointsIndex + 3] = cb.x;
-        normals[pointsIndex + 4] = cb.y;
-        normals[pointsIndex + 5] = cb.z;
-        normals[pointsIndex + 6] = cb.x;
-        normals[pointsIndex + 7] = cb.y;
-        normals[pointsIndex + 8] = cb.z;
-
-        colors[pointsIndex] = r;
-        colors[pointsIndex + 1] = g;
-        colors[pointsIndex + 2] = b;
-
-        colors[pointsIndex + 3] = r;
-        colors[pointsIndex + 4] = g;
-        colors[pointsIndex + 5] = b;
-
-        colors[pointsIndex + 6] = r;
-        colors[pointsIndex + 7] = g;
-        colors[pointsIndex + 8] = b;
-    },
-
     //Updates the material applied to our geometry with custom vertex and fragment shaders
     //This is done in order to support multiple textures.
     updateTextures: function()
     {
+        this._geometryRootNode.updateTextures();
+
         var textures = new Array();
 
         //Compose an array of all the textures to be blended.
