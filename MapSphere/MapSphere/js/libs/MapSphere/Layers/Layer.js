@@ -139,40 +139,8 @@ MapSphere.Layers.Layer = MapSphere.UIEventHost.extend({
 
         uvs[arrayPosition + 0] = u;
         uvs[arrayPosition + 1] = v;
-    },
-
-    //Updates the material applied to our geometry with custom vertex and fragment shaders
-    //This is done in order to support multiple textures.
-    updateTextures: function()
-    {
-        this._geometryRootNode.updateTextures();
-
-        var textures = new Array();
-
-        //Compose an array of all the textures to be blended.
-        for (var i = 0; i < this._decorations.length; i++)
-        {
-            var dec = this._decorations[i];
-
-            var decTex = dec.getTextures();
-
-            for(var j=0; j < decTex.length; j++)
-            {
-                textures.push(decTex[j]);
-            }
-        }
-
-        //Now, we need to blend the images together.
-        var blendedTexture = MapSphere.stackTextures(textures);
-
-        this._texture = blendedTexture;
-
-        this.initMaterial();
-
-        this._mesh.material = this._material;
-
-        return;
-
     }
+
+    
 
 });

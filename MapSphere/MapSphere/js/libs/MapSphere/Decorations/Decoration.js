@@ -15,8 +15,12 @@ MapSphere.Decorations.Decoration = MapSphere.UIEventHost.extend({
 
     _visible: true,
 
+    _textureRequests: null,
+
     init: function (options)
     {
+        this._textureRequests = new Array();
+
         if (MapSphere.notNullNotUndef(options.visible))
         {
             this._visible = options.visible;
@@ -40,6 +44,50 @@ MapSphere.Decorations.Decoration = MapSphere.UIEventHost.extend({
     getTextures: function()
     {
         return this._textures;
+    },
+
+    getTexturesForExtent: function(extent, callback)
+    {
+        var req = {
+            extent: extent,
+            callback: callback,
+            data: null,
+            texture: null,
+            pending: false
+        };
+
+        this._textureRequests.push(req);
+
+        this.handlePendingTextureRequests();
+    },
+
+    handlePendingTextureRequests: function()
+    {
+        //In the base implementation, we just finish all the pending requests.  Simple as that.
+        for (var i = 0; i < this._textureRequests.length; i++)
+        {
+            var req = this._textureRequests[i];
+
+            if (!req.pending) this.finishGetTextureForExtentRequest(req);
+        }
+    },
+
+    finishGetTextureForExtentRequest: function(req)
+    {
+        var index = this._textureRequests.indexOf(req);
+
+        if (index != -1)
+        {
+            this._textureRequests.splice(index, 1);
+        }
+
+        var args = {
+            texture: req.texture,
+            extent: req.extent,
+            sender: this
+        };
+
+        req.callback(args);
     },
 
     setLayer: function(layer)

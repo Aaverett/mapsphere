@@ -13,6 +13,7 @@
     _material: null,
     _usingParentMaterial: true,
     _texture: null,
+    _textures: null,
     _active: true,
     _maxDepth: 6,
 
@@ -34,6 +35,9 @@
         this._maxRho = maxRho;
         this._ellipsoid = ellipsoid;
         this._decorations = decorations;
+
+        //We're going to want to have a texture for each decoration.
+        this._textures = new Array(this._decorations.length);
 
         this._childNodes = new Array(steps);
 
@@ -435,30 +439,28 @@
         return this._material;
     },
 
+    getGeographicExtent: function () {
+
+        var sw = new MapSphere.Geography.LngLat(MapSphere.radToDeg(this._minTheta), MapSphere.radToDeg(this._minRho));
+        var ne = new MapSphere.Geography.LngLat(MapSphere.radToDeg(this._maxTheta), MapSphere.radToDeg(this._maxRho));
+
+        var extent = new MapSphere.Geography.Envelope(sw, ne);
+
+        return extent;
+    },
+
     updateTextures: function()
     {
-        var textures = new Array();
+        var extent = this.getGeographicExtent();
 
-        //Compose an array of all the textures to be blended.
         for (var i = 0; i < this._decorations.length; i++) {
-            var dec = this._decorations[i];
 
-            var decTex = dec.getTextures();
-
-            for (var j = 0; j < decTex.length; j++) {
-                textures.push(decTex[j]);
-            }
+            this._decorations[i].getTexturesForExtent(extent, this.handleDecorationGetExtentComplete.bind(this));
         }
+    },
 
-        //Now, we need to blend the images together.
-        var blendedTexture = MapSphere.stackTextures(textures);
-        this._texture = blendedTexture;
-        
-
-        this._material = new THREE.MeshLambertMaterial({map: this._texture});
-
-        this._mesh.material = this._material;
-
-        return;
+    handleDecorationGetExtentComplete: function(args)
+    {
+        alert("handling");
     }
 });

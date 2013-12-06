@@ -6,7 +6,7 @@
     _currentMapImageUrl: null,
 
     _tempImg: null,
-
+    
     init: function (options)
     {
         this._super(options);
@@ -48,13 +48,23 @@
 
         if (this._visible)
         {
-            this.refreshMap();
+            //Handle any pending texture requests.
+            this.handlePendingTextureRequests();
         }
     },
 
     refreshContents: function()
     {
-        this.refreshMap();
+        //If we're able to refresh the map...
+        if (!this._needsRefresh && this.checkCanRequestMap())
+        {
+            this.refreshMap();
+        }
+        else
+        {
+            this._needsRefresh = true;
+        }
+        
     },
 
     setLayer: function(layer)
@@ -162,6 +172,113 @@
             this._textures.push(this._tempImg);
         }
 
-        this._layer.updateTextures();
+        this.raiseEvent("textureLoadComplete");
+    },
+
+    //This is unique to every implementation because texture requests are not necessarily asynchronous.  
+    handlePendingTextureRequests: function()
+    {
+        if(this.checkCanRequestMap())
+        {
+            //Sweet, we're able to handle requests.  Let's get to it...
+
+            //Loop over the requests
+            for(var i=0; i < this._textureRequests.length; i++)
+            {
+                var req = this._textureRequests[i];
+
+                if(!req.pending)
+                {
+                    //Ok, it's not pending yet...  We need to process it.
+                    this.handleTextureRequest(req);
+                }
+            }
+        }
+    },
+
+    
+    handleTextureRequest: function(req)
+    {
+        //Set the request as pending.
+        req.pending = true;
+
+        //Do some configuration on the request.
+        
+        //These two functions handle the load events, first from the map service, and then later when the actual image is retrieved.
+        function handleMapImageResponseHelper(args)
+        {
+            this.data.owner.handleMapImageResponse(this, args);
+        }
+
+        var reqData = {
+            owner: this
+        };
+
+        req.data = reqData;
+        
+        
+        var visibleExtent = req.extent;
+        var bbox = visibleExtent.getSW().lng() + "," + visibleExtent.getSW().lat() + "," + visibleExtent.getNE().lng() + "," + visibleExtent.getNE().lat();
+        var extentWidth = visibleExtent.getNE().lng() - visibleExtent.getSW().lng();
+        var extentHeight = visibleExtent.getNE().lat() - visibleExtent.getSW().lat();
+        var extentAR = extentWidth / extentHeight;
+        var imgWidth, imgHeight;
+
+        if (extentAR >= 1) {
+            imgWidth = 2048;
+            imgHeight = imgWidth / extentAR;
+        }
+        else {
+            imgHeight = 2048
+            imgWidth = imgHeight / extentAR;
+        }
+
+        var imgDimensions = imgWidth + "," + imgHeight;
+
+        //Compose a request for a map of the visible area.
+        var fullUrl = this._mapServiceURL + "/export";
+
+        var data = {
+            f: "json",
+            bbox: bbox,
+            size: imgDimensions,
+            imageSR: "4326",
+            format: "png"
+        };
+
+        var ajaxOpts = {
+            data: data,
+            complete: this.handleMapImageResponse.bind(this)
+        };
+
+        $.ajax(fullUrl, ajaxOpts);
+    },
+
+    handleMapImageResponse: function(senderReq, args)
+    {
+        function handleMapImageLoadCompleteHelper(args)
+        {
+            this.
+        }
+
+        var responseData = JSON.parse(args.responseText);
+
+        var req = senderReq;
+
+        var imageUrl = responseData.href;
+
+        //Now that we have a URL for the texture, we need to fetch it.
+        var img = document.createElement("img");
+        req.texture = img;
+        img.crossOrigin = "anonymous";
+        img.onload = this.handleMapImageLoadComplete.bind(this);
+        img.src = imageUrl; //This will light off the requesting of the image.
+        
+        
+    },
+
+    handleMapImageLoadComplete: function(args)
+    {
+        //We need to run the callback that was passed in with this request.
     }
 });
