@@ -21,7 +21,7 @@
     _bMesh: null,
 
     _enhancedNodeCount: 0,
-    _lodAggression: 4,
+    _lodAggression: 3,
     _decorations: null,
 
     init: function(parent, minTheta, maxTheta, minRho, maxRho, ellipsoid, steps, altitude, decorations)
@@ -50,16 +50,23 @@
         this._mesh = new THREE.Object3D();
 
         //Inherit or create the material...
-        if (this._parentNode != null)
+        /*if (this._parentNode != null)
         {
             this._material = this._parentNode.getMaterial();
             this._usingParentMaterial = true;
+
+            //Attach to the parent node's events.
+
+            this._parentNode.addEventListener("materialRefreshed", this.handleParentMaterialRefreshed.bind(this));
         }
         else
         {
-            this._material = new THREE.MeshLambertMaterial({vertexColors: THREE.VertexColors});
+            this.refreshMaterial();
             this._usingParentMaterial = false;
-        }
+        }*/
+
+        this.refreshMaterial();
+        this._usingParentMaterial = false;
 
         //Build the geometry.
         this.refreshGeometry();
@@ -411,6 +418,47 @@
         return needUpdate;
     },
 
+    //Replaces the old material with a new one that reflects the current state.
+    refreshMaterial: function()
+    {
+        if(1== 1 || this._parentNode == null || !this._usingParentMaterial)
+        {
+            var opts = {};
+
+            var doVertexColors = true;
+
+            if (this._texture != null)
+            {
+                doVertexColors = false;
+                opts.map = this._texture
+            }
+
+            if (doVertexColors)
+            {
+                opts.vertexColors = THREE.VertexColors;
+            }
+
+            var newmat = new THREE.MeshLambertMaterial(opts);
+
+            this._material = newmat;
+        }
+        else if(this._parentNode != null)
+        {
+            this._material = this._parentNode.getMaterial();
+        }
+
+        if (this._bMesh != null) {
+            this._bMesh.material = this._material;
+        }
+
+        this.raiseEvent("materialRefreshed", this);
+    },
+
+    handleParentMaterialRefreshed: function(sender)
+    {
+        this.refreshMaterial();
+    },
+
     simplifyExtent: function(extent)
     {
 
@@ -455,12 +503,24 @@
 
         for (var i = 0; i < this._decorations.length; i++) {
 
-            this._decorations[i].getTexturesForExtent(extent, this.handleDecorationGetExtentComplete.bind(this));
+            this._decorations[i].getTexturesForExtent(extent, this.handleDecorationGetExtentContentsComplete.bind(this));
         }
     },
 
-    handleDecorationGetExtentComplete: function(args)
+    handleDecorationGetExtentContentsComplete: function(args)
     {
-        alert("handling");
+        var texture = args.image;
+        var sender = args.sender;
+
+        var index = $.inArray(sender, this._decorations);
+
+        if(index > -1)
+        {
+            this._textures[index] = texture;
+
+            this._texture = MapSphere.stackTextures(this._textures);
+
+            this.refreshMaterial();
+        }
     }
 });

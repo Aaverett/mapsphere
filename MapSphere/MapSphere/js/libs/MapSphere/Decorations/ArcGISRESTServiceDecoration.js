@@ -204,18 +204,18 @@
 
         //Do some configuration on the request.
         
-        //These two functions handle the load events, first from the map service, and then later when the actual image is retrieved.
+        //Delegate function for handling the response from the map service.  
+        //This gets bound to our request anonymous object
         function handleMapImageResponseHelper(args)
         {
             this.data.owner.handleMapImageResponse(this, args);
         }
 
         var reqData = {
-            owner: this
+            owner: this            
         };
 
         req.data = reqData;
-        
         
         var visibleExtent = req.extent;
         var bbox = visibleExtent.getSW().lng() + "," + visibleExtent.getSW().lat() + "," + visibleExtent.getNE().lng() + "," + visibleExtent.getNE().lat();
@@ -248,7 +248,7 @@
 
         var ajaxOpts = {
             data: data,
-            complete: this.handleMapImageResponse.bind(this)
+            complete: handleMapImageResponseHelper.bind(req)
         };
 
         $.ajax(fullUrl, ajaxOpts);
@@ -256,9 +256,10 @@
 
     handleMapImageResponse: function(senderReq, args)
     {
+        //Delegate function to handle completion of loading of the texture image.
         function handleMapImageLoadCompleteHelper(args)
         {
-            this.
+            this.data.owner.handleMapImageLoadComplete(this, args);
         }
 
         var responseData = JSON.parse(args.responseText);
@@ -271,14 +272,22 @@
         var img = document.createElement("img");
         req.texture = img;
         img.crossOrigin = "anonymous";
-        img.onload = this.handleMapImageLoadComplete.bind(this);
+        img.onload = handleMapImageLoadCompleteHelper.bind(senderReq);
         img.src = imageUrl; //This will light off the requesting of the image.
         
         
     },
 
-    handleMapImageLoadComplete: function(args)
+    handleMapImageLoadComplete: function(sender, args)
     {
-        //We need to run the callback that was passed in with this request.
+        var img = args.target;
+
+        var callbackArgs =
+            {
+                sender: this,
+                image: img
+            };
+
+        sender.callback(callbackArgs);
     }
 });
