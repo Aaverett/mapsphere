@@ -11,11 +11,16 @@
     {
         this._super(options);
 
+        this._providesElevation = false;
+        this._providesTexture = true;
+
         if(MapSphere.notNullNotUndef(options.mapServiceURL))
         {
             this.setMapServiceURL(options.mapServiceURL);
         }
     },
+
+    
 
     setMapServiceURL: function(mapServiceURL)
     {

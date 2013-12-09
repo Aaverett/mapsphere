@@ -16,6 +16,8 @@ MapSphere.Decorations.Decoration = MapSphere.UIEventHost.extend({
     _visible: true,
 
     _textureRequests: null,
+    _providesElevation: false,
+    _providesTexture: false,
 
     init: function (options)
     {
@@ -93,5 +95,16 @@ MapSphere.Decorations.Decoration = MapSphere.UIEventHost.extend({
     setLayer: function(layer)
     {
         this._layer = layer;
+    },
+
+    getProvidesElevation: function()
+    {
+        return _providesElevation;
+    },
+
+    getProvidesTexture: function()
+    {
+        return _providesTexture;
     }
+
 });

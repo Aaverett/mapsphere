@@ -16,6 +16,10 @@ MapSphere.CameraControllers.OrbitCameraController = MapSphere.CameraControllers.
 
     allow360Pan: false,
 
+    //These are the Y and Z (pitch and yaw) angles (in radians) for the camera, relative to looking straight down at the ground.
+    cameraRotX: 0,
+    cameraRotZ: 0,
+
     init: function (camera, options) {
         this._super(camera);
 
@@ -64,11 +68,15 @@ MapSphere.CameraControllers.OrbitCameraController = MapSphere.CameraControllers.
     mouseMoved: function (x, y) {
         if(this.mouseButtonState[0])
         {
-            this.panMapWithPixelDelta(x, y);
+            this.orbitMapWithPixelDelta(x, y);
+        }
+        else if(this.mouseButtonState[2])
+        {
+            this.panCameraDirectionWithPixelData(x, y);
         }
     },
 
-    panMapWithPixelDelta: function(x, y)
+    orbitMapWithPixelDelta: function(x, y)
     {
         var curElev = this.cameraLocation.elev();
 
@@ -76,7 +84,7 @@ MapSphere.CameraControllers.OrbitCameraController = MapSphere.CameraControllers.
 
         var totalAltRange = this.maximumAltitude - this.minimumAltitude;
 
-        var altRelMin = totalAltRange - (curElev - this.minimumAltitude);
+        var altRelMin = curElev - this.minimumAltitude;
 
         var fraction = altRelMin / (totalAltRange);
 
@@ -132,9 +140,16 @@ MapSphere.CameraControllers.OrbitCameraController = MapSphere.CameraControllers.
 
         var quaternion3 = quaternion2.multiply(quaternion1); //Combine the two rotations.  Note that this isn't commutative, so doing it the other way gives wacky results.
 
+        //This is the pitch angle.
+        var quaternion4 = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(-1, 0, 0), this.cameraRotX);
+        var quaternion5 = quaternion3.multiply(quaternion4);
+
+        //The yaw angle.
+        var quaternion6 = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, -1, 0), this.cameraRotZ);
+        var quaternion7 = quaternion5.multiply(quaternion6);
 
         //this.camera.rotation.setFromQuaternion(quaternion7); //Set the camera's euler rotation from our quaternion.
-        this.camera.rotation.setFromQuaternion(quaternion3); //Set the camera's euler rotation from our quaternion.
+        this.camera.rotation.setFromQuaternion(quaternion7); //Set the camera's euler rotation from our quaternion.
 
         this.cameraMoved();
 
@@ -144,6 +159,8 @@ MapSphere.CameraControllers.OrbitCameraController = MapSphere.CameraControllers.
             MapSphere.updateDebugOutput("orbitcam_theta", MapSphere.degToRad(lon));
             MapSphere.updateDebugOutput("orbitcam_rho", MapSphere.degToRad(lat));
             MapSphere.updateDebugOutput("orbitcam_alt", alt);
+            MapSphere.updateDebugOutput("orbitcam_rotX", this.cameraRotX);
+            MapSphere.updateDebugOutput("orbitcam_rotZ", this.cameraRotZ);
         }
 
         //this.panToCoords(lngLatElev.lng(), lngLatElev.lat(), lngLatElev.elev());
@@ -154,6 +171,15 @@ MapSphere.CameraControllers.OrbitCameraController = MapSphere.CameraControllers.
         var lle = new MapSphere.Geography.LngLatElev(lng, lat, elev);
 
         this.panToLngLatElev(lle);
+    },
+
+    panCameraDirectionWithPixelData: function(x, y)
+    {
+        this.cameraRotX += y * 0.005; //Pitch
+        this.cameraRotZ += x * 0.005; //Yaw
+        //The camera doesn't roll.
+
+        this.panToLngLatElev(this.cameraLocation);
     },
 
     mouseScrolled: function(delta)

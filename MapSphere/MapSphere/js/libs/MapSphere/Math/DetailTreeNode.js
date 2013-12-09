@@ -424,7 +424,7 @@
     {
         if(1== 1 || this._parentNode == null || !this._usingParentMaterial)
         {
-            var opts = {};
+            var opts = {shading: THREE.FlatShading};
 
             var doVertexColors = true;
 
@@ -439,7 +439,7 @@
                 opts.vertexColors = THREE.VertexColors;
             }
 
-            var newmat = new THREE.MeshLambertMaterial(opts);
+            var newmat = new THREE.MeshPhongMaterial(opts);
 
             this._material = newmat;
         }

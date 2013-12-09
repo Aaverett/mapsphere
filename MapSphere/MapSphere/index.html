@@ -27,17 +27,21 @@
                 mapServiceURL: "http://coastal.beg.utexas.edu:6080/arcgis/rest/services/GlobalTestService/MapServer"
             };
 
-            var agsDec = new MapSphere.Decorations.ArcGISRESTServiceDecoration(mapServiceOptions);
-            //var agsDec = new MapSphere.Decorations.StaticTextureDecoration({ texturePath: "assets/bluemarble.jpg" });
-
-            var belLayerOpts = {
-                decorations: [agsDec]
+            var mapServiceOptions1 = {
+                mapServiceURL: "http://coastal.beg.utexas.edu:6080/arcgis/rest/services/GlobalTestService/MapServer"
             };
 
+            var agsDec = new MapSphere.Decorations.ArcGISRESTServiceDecoration(mapServiceOptions);
+            var agsDec1 = new MapSphere.Decorations.ArcGISRESTServiceElevationDecoration(mapServiceOptions1);
+            
+            var belLayerOpts = {
+                decorations: [agsDec, agsDec1]
+            };
+
+            
             var basicEllipsoidLayer = new MapSphere.Layers.BasicEllipsoidLayer(belLayerOpts);
 
             ms.addLayer(basicEllipsoidLayer);
-
         }
 
         //Run the initialization routine 
