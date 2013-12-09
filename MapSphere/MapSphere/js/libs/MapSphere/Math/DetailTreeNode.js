@@ -21,7 +21,8 @@
     _bMesh: null,
 
     _enhancedNodeCount: 0,
-    _lodAggression: 3,
+    _lodAggressionX: 4,
+    _lodAggressionY: 4,
     _decorations: null,
 
     init: function(parent, minTheta, maxTheta, minRho, maxRho, ellipsoid, steps, altitude, decorations)
@@ -333,8 +334,10 @@
         
         var needUpdate = false;
 
+        var curDepth = this.getCurrentDepth();
+
         //is the visible area smaller than the aggression value?
-        if(this.getCurrentDepth() < this._maxDepth && ( rhoIndexSpan <= this._lodAggression || thetaIndexSpan <= this._lodAggression))
+        if(curDepth < this._maxDepth && ( rhoIndexSpan <= this._lodAggressionY && thetaIndexSpan <= this._lodAggressionX))
         {
             for (var i = startIndexRho; i <= stopIndexRho; i++)
             {
@@ -354,8 +357,6 @@
                     
                 }
             }
-
-            
         }
         else
         {
@@ -430,7 +431,7 @@
             if (this._texture != null)
             {
                 doVertexColors = false;
-                opts.map = this._texture
+                opts.map = this._texture;
             }
 
             if (doVertexColors)

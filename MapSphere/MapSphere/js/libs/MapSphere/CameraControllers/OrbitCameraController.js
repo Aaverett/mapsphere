@@ -70,12 +70,22 @@ MapSphere.CameraControllers.OrbitCameraController = MapSphere.CameraControllers.
 
     panMapWithPixelDelta: function(x, y)
     {
+        var curElev = this.cameraLocation.elev();
+
+        //The distance in the lon/lat directions that we move the camera is 
+
+        var totalAltRange = this.maximumAltitude - this.minimumAltitude;
+
+        var altRelMin = totalAltRange - (curElev - this.minimumAltitude);
+
+        var fraction = altRelMin / (totalAltRange);
+
         var deltaDegX = x * -0.1;
         var deltaDegY = y * 0.1;
 
         var curX = this.cameraLocation.lng();
         var curY = this.cameraLocation.lat();
-        var curElev = this.cameraLocation.elev();
+        
 
         var newX = curX + deltaDegX;
         var newY = curY + deltaDegY;
