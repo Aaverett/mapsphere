@@ -21,7 +21,7 @@ MapSphere.CameraControllers.OrbitCameraController = MapSphere.CameraControllers.
     cameraRotZ: 0,
 
     init: function (camera, options) {
-        this._super(camera);
+        this._super(camera, options);
 
         this.ellipsoid = options.ellipsoid;
 
@@ -80,16 +80,28 @@ MapSphere.CameraControllers.OrbitCameraController = MapSphere.CameraControllers.
     {
         var curElev = this.cameraLocation.elev();
 
-        //The distance in the lon/lat directions that we move the camera is 
+        var deltaDegX = 0, deltaDegY = 0;
 
-        var totalAltRange = this.maximumAltitude - this.minimumAltitude;
+        //The real way we do this is figure out the ratio of the distance the user dragged to the dimensions of the visible area.
+        if (this.viewPortX != 0 && this.viewPortY != 0)
+        {
+            var fractionX = x / this.viewPortX;
+            var fractionY = y / this.viewPortY;
 
-        var altRelMin = curElev - this.minimumAltitude;
+            var visibleExtent = this.getCameraVisibleExtent();
 
-        var fraction = altRelMin / (totalAltRange);
+            var spanX = visibleExtent.getNE().lng() - visibleExtent.getSW().lng();
+            var spanY = visibleExtent.getNE().lat() - visibleExtent.getSW().lat();
 
-        var deltaDegX = x * -0.1;
-        var deltaDegY = y * 0.1;
+            deltaDegX = -1.0 * spanX * fractionX;
+            deltaDegY = spanY * fractionY;
+        }
+        else
+        {
+            //Prevent a problem if we for some reason don't know the dimensions of the viewport.
+            deltaDegX = x * -0.1;
+            deltaDegY = y * 0.1;
+        }
 
         var curX = this.cameraLocation.lng();
         var curY = this.cameraLocation.lat();

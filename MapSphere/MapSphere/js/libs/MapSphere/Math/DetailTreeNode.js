@@ -504,7 +504,10 @@
 
         for (var i = 0; i < this._decorations.length; i++) {
 
-            this._decorations[i].getTexturesForExtent(extent, this.handleDecorationGetExtentContentsComplete.bind(this));
+            if (this._decorations[i].getProvidesTexture())
+            {
+                this._decorations[i].getTexturesForExtent(extent, this.handleDecorationGetExtentContentsComplete.bind(this));
+            }
         }
     },
 

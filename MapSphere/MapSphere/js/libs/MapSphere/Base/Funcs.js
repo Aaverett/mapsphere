@@ -46,9 +46,11 @@ MapSphere.stackTextures = function(textures)
 
     for (var i = 0; i < textures.length; i++)
     {
-        if (textures[i].naturalWidth > maxW) maxW = textures[i].naturalWidth;
+        if (MapSphere.notNullNotUndef(textures[i])) {
+            if (textures[i].naturalWidth > maxW) maxW = textures[i].naturalWidth;
 
-        if(textures[i].naturalHeight > maxH) maxH = textures[i].naturalHeight
+            if (textures[i].naturalHeight > maxH) maxH = textures[i].naturalHeight
+        }
     }
 
     var canvas = document.createElement("canvas");
@@ -58,8 +60,11 @@ MapSphere.stackTextures = function(textures)
     var ctx = canvas.getContext("2d");
     for(var i=0; i<textures.length; i++)
     {
-        //Write the image data into our canvas, stretching it so that it takes up the whole canvas.
-        ctx.drawImage(textures[i], 0, 0, maxW, maxH);
+        if (MapSphere.notNullNotUndef(textures[i]))
+        {
+            //Write the image data into our canvas, stretching it so that it takes up the whole canvas.
+            ctx.drawImage(textures[i], 0, 0, maxW, maxH);
+        }
     }
 
     /*var img1 = $("#img1")[0];

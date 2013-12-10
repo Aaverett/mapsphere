@@ -5,12 +5,26 @@
     //We keep track of the mouse position
     lastMouseX: null,
     lastMouseY: null,
+    viewPortX: 0,
+    viewPortY: 0,
 
     //We also keep track of the button state
     mouseButtonState: [false, false, false],
 
-    init: function (camera) {
+    init: function (camera, options) {
         this.camera = camera;
+
+        if(MapSphere.notNullNotUndef(options))
+        {
+            if(MapSphere.notNullNotUndef(options.viewPortX))
+            {
+                this.viewPortX = options.viewPortX;
+            }
+
+            if (MapSphere.notNullNotUndef(options.viewPortY)) {
+                this.viewPortY = options.viewPortY;
+            }
+        }
     },
 
     mouseEnter: function (args) {
@@ -86,6 +100,16 @@
 
     getCameraVisibleExtent: function () {
         return null;
+    },
+
+    setViewportX: function(x)
+    {
+        this.viewPortX = x;
+    },
+
+    setViewportY: function(y)
+    {
+        this.viewPortY = y;
     }
 
 });

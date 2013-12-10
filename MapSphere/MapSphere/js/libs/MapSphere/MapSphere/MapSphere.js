@@ -153,7 +153,9 @@ MapSphere.MapSphere = MapSphere.UIEventHost.extend({
         //Do we already have a camera controller?  No?  Ok, create a default one.
         if (this.cameraController == null) {
             var opts = {
-                ellipsoid: this.ellipsoid
+                ellipsoid: this.ellipsoid,
+                viewPortX: this.canvas.width(),
+                viewPortY: this.canvas.height()
             };
 
             this.setCameraController(new MapSphere.CameraControllers.OrbitCameraController(this.camera, opts));

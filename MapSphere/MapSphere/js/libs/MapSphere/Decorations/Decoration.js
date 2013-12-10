@@ -99,12 +99,12 @@ MapSphere.Decorations.Decoration = MapSphere.UIEventHost.extend({
 
     getProvidesElevation: function()
     {
-        return _providesElevation;
+        return this._providesElevation;
     },
 
     getProvidesTexture: function()
     {
-        return _providesTexture;
+        return this._providesTexture;
     }
 
 });
