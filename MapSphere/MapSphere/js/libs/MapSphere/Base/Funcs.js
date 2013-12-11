@@ -80,6 +80,41 @@ MapSphere.stackTextures = function(textures)
     
 }
 
+MapSphere.extractElevationDataFromImage = function(image, whiteval, blackval, xsteps, ysteps)
+{
+    var canvas = document.createElement("canvas");
+    canvas.width = image.width;
+    canvas.height =image.height;
+
+    var ctx = canvas.getContext("2d");
+    ctx.drawImage(image, 0, 0);
+
+    var elevData = new Array(ysteps);
+    
+    for(var i =0; i < ysteps; i++)
+    {
+        elevData[i] = new Array(xsteps);
+
+        for(var j=0; j < xsteps; j++)
+        {
+            var pixelX, pixelY;
+
+            pixelX = image.width * (j / xsteps);
+            pixelY = image.height * ((ysteps - i) / ysteps);
+
+            var pixelData = ctx.getImageData(pixelX, pixelY, 1, 1);
+
+            var avg = (pixelData.data[0] + pixelData.data[1] + pixelData.data[2]) / 3;
+
+            var val = avg;
+
+            elevData[i][j] = val;
+        }
+    }
+
+    return elevData;
+}
+
 MapSphere.updateDebugOutput = function(labelname, message)
 {
     //Check if the debug pane exists

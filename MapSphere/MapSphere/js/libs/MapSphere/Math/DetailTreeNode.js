@@ -14,8 +14,10 @@
     _usingParentMaterial: true,
     _texture: null,
     _textures: null,
+    _elevationData: null,
     _active: true,
     _maxDepth: 6,
+    _vExagg: 100,
 
     _mesh: null,
     _bMesh: null,
@@ -39,6 +41,18 @@
 
         //We're going to want to have a texture for each decoration.
         this._textures = new Array(this._decorations.length);
+        
+        //Initialize the elevation array
+        this._elevationData = new Array(steps);
+
+        for (var i = 0; i < steps; i++)
+        {
+            this._elevationData[i] = new Array(steps);
+            for(var j =0; j < steps; j++)
+            {
+                this._elevationData[i][j] = 0;
+            }
+        }
 
         this._childNodes = new Array(steps);
 
@@ -71,6 +85,8 @@
 
         //Build the geometry.
         this.refreshGeometry();
+        
+        this.updateElevationData();
 
         //Load the texture(s)
         this.updateTextures();
@@ -83,6 +99,7 @@
         var vertexCount = triangleCount * 3;
 
         this._geometry = new THREE.BufferGeometry();
+        this._geometry.dynamic = true;
 
         this._geometry.attributes = {
             index: {
@@ -120,32 +137,65 @@
             indices[i] = val;
         }
 
+        //This will fill the buffer geometry's member arrays with values.
+        this._populateBufferGeometry();
+
+        //If a mesh already exists, remove it from the scene graph
+        if (this._bMesh != null)
+        {
+            this._mesh.remove(this._bMesh);
+        }
+
+        //Create a new mesh...
+        this._bMesh = new THREE.Mesh(this._geometry, this._material);
+
+        //Add the new mesh to the scene graph
+        this._mesh.add(this._bMesh);
+    },
+
+    //This fills the geometry arrays with their values.
+    _populateBufferGeometry: function()
+    {
+        var triangleCount = (this._steps * this._steps - this._enhancedNodeCount) * 2;
+        var vertexCount = triangleCount * 3;
+        var chunkSize = 21845;
+
         var thetaStep = (this._maxTheta - this._minTheta) / this._steps;
         var rhoStep = (this._maxRho - this._minRho) / this._steps;
         var pointIndex = 0;
         var uvIndex = 0;
 
-        
         var curRho = this._minRho;
 
         var alternateColorCounter = 0;
 
-        for(var i=0; i < this._steps; i++)
-        {
+        for (var i = 0; i < this._steps; i++) {
             var curTheta = this._minTheta;
             var nextRho = curRho + rhoStep;
 
-            for(var j=0; j < this._steps; j++)
-            {
+            for (var j = 0; j < this._steps; j++) {
                 var nextTheta = curTheta + thetaStep;
-                
+
                 //Each quadrangle can be enhanced with a child node.  If it is enhanced, we don't display it here, as that would interpenetrate
                 if (this._childNodes[i][j] == undefined || this._childNodes[i][j] == null) {
 
-                    var v0 = this._ellipsoid.toCartesianWithLngLatElevValues(curTheta, curRho, this._altitude, false);
-                    var v1 = this._ellipsoid.toCartesianWithLngLatElevValues(nextTheta, curRho, this._altitude, false);
-                    var v2 = this._ellipsoid.toCartesianWithLngLatElevValues(curTheta, nextRho, this._altitude, false);
-                    var v3 = this._ellipsoid.toCartesianWithLngLatElevValues(nextTheta, nextRho, this._altitude, false);
+                    //For readability, we copy the elevation data into these local vars before using it in our 
+                    var elev0, elev1, elev2, elev3;
+
+                    var yindex = i + 1, xindex = j + 1;
+
+                    if (yindex >= this._steps) yindex = 0;
+                    if (xindex >= this._steps) xindex = 0;
+
+                    elev0 = this._elevationData[i][j];
+                    elev1 = this._elevationData[yindex][j];
+                    elev2 = this._elevationData[i][xindex];
+                    elev3 = this._elevationData[yindex][xindex];
+
+                    var v0 = this._ellipsoid.toCartesianWithLngLatElevValues(curTheta, curRho, this._altitude + (elev0 * this._vExagg), false);
+                    var v1 = this._ellipsoid.toCartesianWithLngLatElevValues(nextTheta, curRho, this._altitude + (elev1 * this._vExagg), false);
+                    var v2 = this._ellipsoid.toCartesianWithLngLatElevValues(curTheta, nextRho, this._altitude + (elev2 * this._vExagg), false);
+                    var v3 = this._ellipsoid.toCartesianWithLngLatElevValues(nextTheta, nextRho, this._altitude + (elev3 * this._vExagg), false);
 
                     var r, g, b;
 
@@ -158,7 +208,7 @@
 
                     this._addTriangle(v2, v0, v1, pointIndex, r, g, b);
                     pointIndex += 9;
-                    
+
                     this._addTriangle(v2, v1, v3, pointIndex, r, g, b);
                     pointIndex += 9;
 
@@ -189,20 +239,9 @@
         }
 
         this._geometry.computeBoundingSphere();
-
-        //If a mesh already exists, remove it from the scene graph
-        if (this._bMesh != null)
-        {
-            this._mesh.remove(this._bMesh);
-        }
-
-        //Create a new mesh...
-        this._bMesh = new THREE.Mesh(this._geometry, this._material);
-
-        //Add the new mesh to the scene graph
-        this._mesh.add(this._bMesh);
     },
     
+    //Fills in the values in the geometry arrays for a triangle with the given vertices.
     _addTriangle: function(v0, v1, v2, pointsIndex, r, g, b)
     {
         var positions = this._geometry.attributes.position.array;
@@ -252,6 +291,7 @@
         colors[pointsIndex + 8] = b;
     },
 
+    //This sets the UV values for a given face in the geometry arrays.
     _setUVsForFace: function(uvIndex, curTheta, nextTheta, curRho, nextRho)
     {
         var thetaSpan = this._maxTheta - this._minTheta;
@@ -506,12 +546,24 @@
 
             if (this._decorations[i].getProvidesTexture())
             {
-                this._decorations[i].getTexturesForExtent(extent, this.handleDecorationGetExtentContentsComplete.bind(this));
+                this._decorations[i].getTexturesForExtent(extent, this.handleDecorationGetExtentTextureContentsComplete.bind(this));
             }
         }
     },
 
-    handleDecorationGetExtentContentsComplete: function(args)
+    updateElevationData: function()
+    {
+        var extent = this.getGeographicExtent();
+
+        for (var i = 0; i < this._decorations.length; i++) {
+            if(this._decorations[i].getProvidesElevation())
+            {
+                this._decorations[i].getElevationForExtent(extent, this.handleDecorationGetExtentElevationContentsComplete.bind(this));
+            }
+        }
+    },
+
+    handleDecorationGetExtentTextureContentsComplete: function(args)
     {
         var texture = args.image;
         var sender = args.sender;
@@ -525,6 +577,23 @@
             this._texture = MapSphere.stackTextures(this._textures);
 
             this.refreshMaterial();
+        }
+    },
+
+    handleDecorationGetExtentElevationContentsComplete: function(args)
+    {
+        var image = args.image;
+        var sender = args.sender;
+        var whiteVal = args.whiteVal;
+        var blackVal = args.blackVal;
+
+        var index = $.inArray(sender, this._decorations);
+
+        if (index > -1) {
+            this._elevationData = MapSphere.extractElevationDataFromImage(image, whiteVal, blackVal, this._steps, this._steps);
+
+            //Redo the buffer geometry.
+            this._populateBufferGeometry();
         }
     }
 });

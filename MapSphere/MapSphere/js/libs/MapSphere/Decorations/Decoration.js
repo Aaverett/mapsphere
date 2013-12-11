@@ -22,6 +22,7 @@ MapSphere.Decorations.Decoration = MapSphere.UIEventHost.extend({
     init: function (options)
     {
         this._textureRequests = new Array();
+        this._elevationRequests = new Array();
 
         if (MapSphere.notNullNotUndef(options.visible))
         {
@@ -105,6 +106,47 @@ MapSphere.Decorations.Decoration = MapSphere.UIEventHost.extend({
     getProvidesTexture: function()
     {
         return this._providesTexture;
-    }
+    },
 
+    getElevationForExtent: function(extent, callback)
+    {
+        var req = {
+            extent: extent,
+            callback: callback,
+            data: null,
+            elevData: null,
+            pending: false
+        };
+
+        this._elevationRequests.push(req);
+
+        this.handlePendingElevationRequests();
+    },
+
+    handlePendingElevationRequests: function () {
+
+        //Note:  This is the base implementation, which doesn't have any business logic.  In a real
+        //implementation that actually does something, this process is more involved.
+        for (var i = 0; i < this._elevationRequests.length; i++) {
+            var req = this._elevationRequests[i];
+
+            if (!req.pending) this.finishGetElevationForExtentRequest(req);
+        }
+    },
+
+    finishGetElevationForExtentRequest: function(req) {
+        var index = this._elevationRequests.indexOf(req);
+
+        if (index != -1) {
+            this._elevationRequests.splice(index, 1);
+        }
+
+        var args = {
+            elevData: req.elevData,
+            extent: req.extent,
+            sender: this
+        };
+
+        req.callback(args);
+    }
 });

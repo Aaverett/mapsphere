@@ -211,7 +211,7 @@
         
         //Delegate function for handling the response from the map service.  
         //This gets bound to our request anonymous object
-        function handleMapImageResponseHelper(args)
+        var handleMapImageResponseHelper = function(args)
         {
             this.data.owner.handleMapImageResponse(this, args);
         }
@@ -262,7 +262,7 @@
     handleMapImageResponse: function(senderReq, args)
     {
         //Delegate function to handle completion of loading of the texture image.
-        function handleMapImageLoadCompleteHelper(args)
+        var handleMapImageLoadCompleteHelper = function(args)
         {
             this.data.owner.handleMapImageLoadComplete(this, args);
         }
