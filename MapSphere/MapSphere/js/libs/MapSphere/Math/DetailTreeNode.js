@@ -188,10 +188,10 @@
                     if (xindex >= this._steps) xindex = 0;
 
                     elev0 = this._elevationData[i][j];
-                    elev1 = this._elevationData[yindex][j];
-                    elev2 = this._elevationData[i][xindex];
+                    elev1 = this._elevationData[i][xindex];
+                    elev2 = this._elevationData[yindex][j];
                     elev3 = this._elevationData[yindex][xindex];
-
+                    
                     var v0 = this._ellipsoid.toCartesianWithLngLatElevValues(curTheta, curRho, this._altitude + (elev0 * this._vExagg), false);
                     var v1 = this._ellipsoid.toCartesianWithLngLatElevValues(nextTheta, curRho, this._altitude + (elev1 * this._vExagg), false);
                     var v2 = this._ellipsoid.toCartesianWithLngLatElevValues(curTheta, nextRho, this._altitude + (elev2 * this._vExagg), false);
@@ -237,6 +237,10 @@
 
             this._geometry.offsets.push(offset);
         }
+
+        this._geometry.attributes.position.needsUpdate = true;
+        this._geometry.attributes.color.needsUpdate = true;
+        this._geometry.attributes.uv.needsUpdate = true;
 
         this._geometry.computeBoundingSphere();
     },

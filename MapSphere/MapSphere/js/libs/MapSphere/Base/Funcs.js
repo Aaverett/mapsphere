@@ -91,16 +91,21 @@ MapSphere.extractElevationDataFromImage = function(image, whiteval, blackval, xs
 
     var elevData = new Array(ysteps);
     
+    //For every y step...
     for(var i =0; i < ysteps; i++)
     {
+        //Create an array of X steps...
         elevData[i] = new Array(xsteps);
 
+        //Then for for every x step...
         for(var j=0; j < xsteps; j++)
         {
+            //Take the pixel value from the image, get the average of the three channels, and insert it into the array.
+
             var pixelX, pixelY;
 
-            pixelX = image.width * (j / xsteps);
-            pixelY = image.height * ((ysteps - i) / ysteps);
+            pixelX = image.width * (j / xsteps); //Coordinates in the map scene increase from left to right, just like the pixel indices in the image.
+            pixelY = image.height * ((ysteps - i) / ysteps); //coordinates in the scene increase from bottom to top, though, opposite that of the image, so we invert the Y index here.
 
             var pixelData = ctx.getImageData(pixelX, pixelY, 1, 1);
 
