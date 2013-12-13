@@ -108,14 +108,16 @@ MapSphere.Decorations.Decoration = MapSphere.UIEventHost.extend({
         return this._providesTexture;
     },
 
-    getElevationForExtent: function(extent, callback)
+    getElevationForExtent: function(extent, stepsX, stepsY, callback)
     {
         var req = {
             extent: extent,
             callback: callback,
             data: null,
             elevData: null,
-            pending: false
+            pending: false,
+            stepsX: stepsX,
+            stepsY: stepsY
         };
 
         this._elevationRequests.push(req);

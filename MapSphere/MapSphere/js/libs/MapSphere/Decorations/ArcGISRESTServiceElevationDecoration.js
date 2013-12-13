@@ -1,12 +1,19 @@
 ﻿//This is a height map decoration for the basic ellipsoid that loads its data from an ArcGIS REST API service.
 
 MapSphere.Decorations.ArcGISRESTServiceElevationDecoration = MapSphere.Decorations.ArcGISRESTServiceDecoration.extend({
+    _heightMapLayerIndex: null,
+
     init: function(options)
     {
         this._super(options);
 
         this._providesElevation = true;
         this._providesTexture = false;
+
+        if(MapSphere.notNullNotUndef())
+        {
+
+        }
     },
 
     handleRefreshMapServiceMetadataResponse: function (args) {
@@ -56,18 +63,31 @@ MapSphere.Decorations.ArcGISRESTServiceElevationDecoration = MapSphere.Decoratio
         req.data = reqData;
 
         var visibleExtent = req.extent;
-        var bbox = visibleExtent.getSW().lng() + "," + visibleExtent.getSW().lat() + "," + visibleExtent.getNE().lng() + "," + visibleExtent.getNE().lat();
         var extentWidth = visibleExtent.getNE().lng() - visibleExtent.getSW().lng();
         var extentHeight = visibleExtent.getNE().lat() - visibleExtent.getSW().lat();
+
+        var extentStepX = extentWidth / req.stepsX;
+        var extentStepY = extentHeight / req.stepsY;
+
+        //The actual extent we want in the texture is actually .5 pixels bigger in both x and y directions than the extent of the image.
+        var bboxMinX, bboxMaxX, bboxMinY, bboxMaxY;
+        bboxMinX = visibleExtent.getSW().lng() - (extentStepX / 2);
+        bboxMaxX = visibleExtent.getNE().lng() + (extentStepX / 2);
+        bboxMinY = visibleExtent.getSW().lat() - (extentStepY / 2);
+        bboxMaxY = visibleExtent.getNE().lat() + (extentStepY / 2);
+
+        var bbox = bboxMinX + "," + bboxMinY + "," + bboxMaxX + "," + bboxMaxY;
+        
+
         var extentAR = extentWidth / extentHeight;
         var imgWidth, imgHeight;
 
         if (extentAR >= 1) {
-            imgWidth = 32;
+            imgWidth = req.stepsX + 1;
             imgHeight = imgWidth / extentAR;
         }
         else {
-            imgHeight = 32;
+            imgHeight = req.stepsY + 1;
             imgWidth = imgHeight / extentAR;
         }
 

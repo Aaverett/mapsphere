@@ -25,10 +25,12 @@
             
             var mapServiceOptions = {
                 mapServiceURL: "http://coastal.beg.utexas.edu:6080/arcgis/rest/services/GlobalTestService/MapServer"
+                //mapServiceURL: "http://coastal.beg.utexas.edu:6080/arcgis/rest/services/testelev/MapServer",
             };
 
             var mapServiceOptions1 = {
-                mapServiceURL: "http://coastal.beg.utexas.edu:6080/arcgis/rest/services/testelev/MapServer"
+                mapServiceURL: "http://coastal.beg.utexas.edu:6080/arcgis/rest/services/testelev/MapServer",
+                heightMapLayerIndex: 0
             };
 
             var agsDec = new MapSphere.Decorations.ArcGISRESTServiceDecoration(mapServiceOptions);

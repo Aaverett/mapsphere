@@ -86,26 +86,30 @@ MapSphere.extractElevationDataFromImage = function(image, whiteval, blackval, xs
     canvas.width = image.width;
     canvas.height =image.height;
 
-    var ctx = canvas.getContext("2d");
-    ctx.drawImage(image, 0, 0);
+    var xsteps1 = xsteps + 1;
+    var ysteps1 = ysteps + 1;
 
-    var elevData = new Array(ysteps);
+    var ctx = canvas.getContext("2d");
+    ctx.drawImage(image, 0, 0, xsteps1, ysteps1);
+
+
+    var elevData = new Array(ysteps1);
     
     //For every y step...
-    for(var i =0; i < ysteps; i++)
+    for(var i =0; i < ysteps1; i++)
     {
         //Create an array of X steps...
-        elevData[i] = new Array(xsteps);
+        elevData[i] = new Array(xsteps1);
 
         //Then for for every x step...
-        for(var j=0; j < xsteps; j++)
+        for(var j=0; j < xsteps1; j++)
         {
             //Take the pixel value from the image, get the average of the three channels, and insert it into the array.
 
             var pixelX, pixelY;
 
-            pixelX = image.width * (j / xsteps); //Coordinates in the map scene increase from left to right, just like the pixel indices in the image.
-            pixelY = image.height * ((ysteps - i) / ysteps); //coordinates in the scene increase from bottom to top, though, opposite that of the image, so we invert the Y index here.
+            pixelX = image.width * (j / xsteps1 ); //Coordinates in the map scene increase from left to right, just like the pixel indices in the image.
+            pixelY = image.height * ((ysteps1 - i) / ysteps1); //coordinates in the scene increase from bottom to top, though, opposite that of the image, so we invert the Y index here.
 
             var pixelData = ctx.getImageData(pixelX, pixelY, 1, 1);
 

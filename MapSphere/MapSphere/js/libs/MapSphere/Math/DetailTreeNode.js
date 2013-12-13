@@ -43,12 +43,12 @@
         this._textures = new Array(this._decorations.length);
         
         //Initialize the elevation array
-        this._elevationData = new Array(steps);
+        this._elevationData = new Array(steps + 1);
 
-        for (var i = 0; i < steps; i++)
+        for (var i = 0; i < steps + 1; i++)
         {
-            this._elevationData[i] = new Array(steps);
-            for(var j =0; j < steps; j++)
+            this._elevationData[i] = new Array(steps + 1);
+            for(var j =0; j < steps + 1; j++)
             {
                 this._elevationData[i][j] = 0;
             }
@@ -184,8 +184,8 @@
 
                     var yindex = i + 1, xindex = j + 1;
 
-                    if (yindex >= this._steps) yindex = 0;
-                    if (xindex >= this._steps) xindex = 0;
+                    /*if (yindex >= this._steps) yindex = 0;
+                    if (xindex >= this._steps) xindex = 0;*/
 
                     elev0 = this._elevationData[i][j];
                     elev1 = this._elevationData[i][xindex];
@@ -562,7 +562,7 @@
         for (var i = 0; i < this._decorations.length; i++) {
             if(this._decorations[i].getProvidesElevation())
             {
-                this._decorations[i].getElevationForExtent(extent, this.handleDecorationGetExtentElevationContentsComplete.bind(this));
+                this._decorations[i].getElevationForExtent(extent, this._steps, this._steps, this.handleDecorationGetExtentElevationContentsComplete.bind(this));
             }
         }
     },
