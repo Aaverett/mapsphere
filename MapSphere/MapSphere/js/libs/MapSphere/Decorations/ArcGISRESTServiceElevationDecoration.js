@@ -84,11 +84,11 @@ MapSphere.Decorations.ArcGISRESTServiceElevationDecoration = MapSphere.Decoratio
 
         if (extentAR >= 1) {
             imgWidth = req.stepsX + 1;
-            imgHeight = imgWidth / extentAR;
+            imgHeight = (imgWidth / extentAR) + 1;
         }
         else {
             imgHeight = req.stepsY + 1;
-            imgWidth = imgHeight / extentAR;
+            imgWidth = (imgHeight / extentAR) + 1;
         }
 
         var imgDimensions = imgWidth + "," + imgHeight;

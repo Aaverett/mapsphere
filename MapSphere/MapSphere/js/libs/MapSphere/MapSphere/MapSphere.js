@@ -181,7 +181,7 @@ MapSphere.MapSphere = MapSphere.UIEventHost.extend({
         this.scene.add(this.ambientLight);
 
         this.sunLight = new THREE.PointLight(0xffffff, 3, this.ellipsoid.getEquatorialRadius() * 15);
-        this.sunLight.position.set(this.ellipsoid.getEquatorialRadius() * 10, this.ellipsoid.getEquatorialRadius() * -3, 0);
+        this.sunLight.position.set(this.ellipsoid.getEquatorialRadius() * 7, this.ellipsoid.getEquatorialRadius() * -7, 0);
 
         this.scene.add(this.sunLight);
 

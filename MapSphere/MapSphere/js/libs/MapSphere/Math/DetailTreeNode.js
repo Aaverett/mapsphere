@@ -476,6 +476,7 @@
             {
                 doVertexColors = false;
                 opts.map = this._texture;
+                      
             }
 
             if (doVertexColors)
