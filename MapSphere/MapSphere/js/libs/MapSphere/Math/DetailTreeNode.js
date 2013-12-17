@@ -17,7 +17,7 @@
     _elevationData: null,
     _active: true,
     _maxDepth: 6,
-    _vExagg: 100,
+    _vExagg: 1,
 
     _mesh: null,
     _bMesh: null,

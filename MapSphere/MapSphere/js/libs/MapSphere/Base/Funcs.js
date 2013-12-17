@@ -108,14 +108,19 @@ MapSphere.extractElevationDataFromImage = function(image, whiteval, blackval, xs
 
             var pixelX, pixelY;
 
-            pixelX = image.width * Math.floor(j / xsteps1 ); //Coordinates in the map scene increase from left to right, just like the pixel indices in the image.
-            pixelY = image.height * Math.floor((ysteps1 - i) / ysteps1) - 1; //coordinates in the scene increase from bottom to top, though, opposite that of the image, so we invert the Y index here.
+            pixelX = Math.floor(image.width * j / xsteps1) ; //Coordinates in the map scene increase from left to right, just like the pixel indices in the image.
+            pixelY = Math.floor(image.height * (ysteps1 - i) / ysteps1); //coordinates in the scene increase from bottom to top, though, opposite that of the image, so we invert the Y index here.
+
+            if (pixelX == image.width) pixelX--;
+            if (pixelY == image.height) pixelY--;
 
             var pixelData = ctx.getImageData(pixelX, pixelY, 1, 1);
 
             var avg = (pixelData.data[0] + pixelData.data[1] + pixelData.data[2]) / 3;
 
             var val = avg;
+
+            var val = blackval + (whiteval - blackval) * (avg / 256);
 
             elevData[i][j] = val;
         }
