@@ -105,7 +105,7 @@ MapSphere.Layers.Layer = MapSphere.UIEventHost.extend({
             var thetaPrime = MapSphere.degToRad(180);
             var rhoPrime = MapSphere.degToRad(90);
 
-            this._geometryRootNode = new MapSphere.Math.DetailTreeNode(null, theta0, thetaPrime, rho0, rhoPrime, this._ellipsoid, 32, 0, this._decorations);
+            this._geometryRootNode = new MapSphere.Math.DetailTreeNode(null, theta0, thetaPrime, rho0, rhoPrime, this._ellipsoid, 48, 0, this._decorations);
         }
         else
         {

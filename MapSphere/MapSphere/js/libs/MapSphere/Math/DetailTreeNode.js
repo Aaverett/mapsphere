@@ -18,6 +18,8 @@
     _active: true,
     _maxDepth: 6,
     _vExagg: 1,
+    _thetaStep: null,
+    _rhoStep: null,
 
     _mesh: null,
     _bMesh: null,
@@ -38,6 +40,9 @@
         this._maxRho = maxRho;
         this._ellipsoid = ellipsoid;
         this._decorations = decorations;
+
+        this._thetaStep = (this._maxTheta - this._minTheta) / this._steps;
+        this._rhoStep = (this._maxRho - this._minRho) / this._steps;
 
         //We're going to want to have a texture for each decoration.
         this._textures = new Array(this._decorations.length);
@@ -160,8 +165,8 @@
         var vertexCount = triangleCount * 3;
         var chunkSize = 21845;
 
-        var thetaStep = (this._maxTheta - this._minTheta) / this._steps;
-        var rhoStep = (this._maxRho - this._minRho) / this._steps;
+        var thetaStep = this._thetaStep;
+        var rhoStep = this._rhoStep;
         var pointIndex = 0;
         var uvIndex = 0;
 
@@ -191,6 +196,32 @@
                     elev1 = this._elevationData[i][xindex];
                     elev2 = this._elevationData[yindex][j];
                     elev3 = this._elevationData[yindex][xindex];
+
+                    //This part is only done when we actually have a parent...
+                    if (this._parentNode != null) {
+                        //If we're at an edge, we need to blend the edges together with neighboring tiles.  
+                        if (j == 0) {
+                            //Left edge...
+                            elev0 = (elev0 + this._parentNode.getMatingAltitude(curTheta, curRho)) / 2;
+                            elev2 = (elev2 + this._parentNode.getMatingAltitude(curTheta, nextRho)) / 2;
+                        }
+                        else if (j + 1 == this._steps) {
+                            //Right edge...
+                            elev1 = (elev1 + this._parentNode.getMatingAltitude(nextTheta, curRho)) / 2;
+                            elev3 = (elev3 + this._parentNode.getMatingAltitude(nextTheta, nextRho)) / 2;
+                        }
+
+                        if (i == 0) {
+                            //Bottom edge...
+                            elev0 = (elev0 + this._parentNode.getMatingAltitude(curTheta, curRho)) / 2;
+                            elev1 = (elev1 + this._parentNode.getMatingAltitude(nextTheta, curRho)) / 2;
+                        }
+                        else if (i + 1 == this._steps) {
+                            //Top edge...
+                            elev2 = (elev2 + this._parentNode.getMatingAltitude(curTheta, nextRho)) / 2;
+                            elev3 = (elev3 + this._parentNode.getMatingAltitude(nextTheta, nextRho)) / 2;
+                        }
+                    }
                     
                     var v0 = this._ellipsoid.toCartesianWithLngLatElevValues(curTheta, curRho, this._altitude + (elev0 * this._vExagg), false);
                     var v1 = this._ellipsoid.toCartesianWithLngLatElevValues(nextTheta, curRho, this._altitude + (elev1 * this._vExagg), false);
@@ -357,8 +388,8 @@
         }
 
 
-        var thetaStep = (this._maxTheta - this._minTheta) / this._steps;
-        var rhoStep = (this._maxRho - this._minRho) / this._steps;
+        var thetaStep = this._thetaStep;
+        var rhoStep = this._rhoStep;
 
         var startIndexTheta = Math.floor((workingTheta0 - this._minTheta) / thetaStep);
         var stopIndexTheta = Math.floor((workingThetaPrime - this._minTheta) / thetaStep);
@@ -423,12 +454,13 @@
         }
     },
 
+    //This adds a child node to our current node (leading to recursion)
     _addChildNode: function(thetaIndex, rhoIndex)
     {
         var minTheta, maxTheta, minRho, maxRho;
 
-        var thetaStep = (this._maxTheta - this._minTheta) / this._steps;
-        var rhoStep = (this._maxRho - this._minRho) / this._steps;
+        var thetaStep = this._thetaStep;
+        var rhoStep = this._rhoStep;
 
         minTheta = this._minTheta + (thetaIndex * thetaStep);
         maxTheta = this._minTheta + (thetaIndex + 1) * thetaStep;
@@ -444,6 +476,7 @@
         this._enhancedNodeCount++;
     },
 
+    //this removes a child node from our current node.
     _killChildNode: function(thetaIndex, rhoIndex)
     {
         var needUpdate = false;
@@ -599,6 +632,27 @@
 
             //Redo the buffer geometry.
             this._populateBufferGeometry();
+        }
+    },
+
+    //This returns the altitude of the vertex at the given location.
+    getMatingAltitude: function(theta, rho)
+    {
+        //Which of our steps does it occur in?
+        var deltaTheta = theta - this._minTheta;
+        var deltaRho = rho - this._minRho;
+
+        var thetaIndex = deltaTheta / this._thetaStep;
+        var rhoIndex = deltaRho / this._rhoStep;
+
+        //Do we have a child node at that spot?
+        if(MapSphere.notNullNotUndef(this._childNodes[rhoIndex]) && MapSphere.notNullNotUndef(this._childNodes[rhoIndex][thetaIndex))
+        {
+            return this._childNodes[rhoIndex][thetaIndex].getMatingAltitude(theta, rho);
+        }
+        else
+        {
+            //Ok, there's no child node
         }
     }
 });
