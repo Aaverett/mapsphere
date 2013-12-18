@@ -97,6 +97,26 @@
         this.updateTextures();
     },
 
+    getMinTheta: function()
+    {
+        return this._minTheta;
+    },
+
+    getMaxTheta: function()
+    {
+        return this._maxTheta;
+    },
+
+    getMinRho: function()
+    {
+        return this._minRho;
+    },
+
+    getMaxRho: function()
+    {
+        return this._maxRho;
+    },
+
     //Creates the geometry for this object.
     refreshGeometry: function()
     {
@@ -632,27 +652,82 @@
 
             //Redo the buffer geometry.
             this._populateBufferGeometry();
+
+            //Tell the parent node that any siblings need to be 
+            this._parentNode.notifySiblingsOfElevationUpdate(this);
         }
     },
 
     //This returns the altitude of the vertex at the given location.
     getMatingAltitude: function(theta, rho)
     {
+        var ret = 0;
+
         //Which of our steps does it occur in?
         var deltaTheta = theta - this._minTheta;
         var deltaRho = rho - this._minRho;
 
-        var thetaIndex = deltaTheta / this._thetaStep;
-        var rhoIndex = deltaRho / this._rhoStep;
+        var thetaIndex = Math.floor(deltaTheta / this._thetaStep);
+        var rhoIndex = Math.floor(deltaRho / this._rhoStep);
 
-        //Do we have a child node at that spot?
-        if(MapSphere.notNullNotUndef(this._childNodes[rhoIndex]) && MapSphere.notNullNotUndef(this._childNodes[rhoIndex][thetaIndex))
+        //Theta and rho indices need to be within bounds.
+        if(thetaIndex >= 0 && thetaIndex < this._steps && rhoIndex >= 0 && rhoIndex < this._steps)
         {
-            return this._childNodes[rhoIndex][thetaIndex].getMatingAltitude(theta, rho);
+            //Do we have a child node at that spot?
+            if(MapSphere.notNullNotUndef(this._childNodes[rhoIndex]) && MapSphere.notNullNotUndef(this._childNodes[rhoIndex][thetaIndex]))
+            {
+                //Yes, we do.  Ask the child node to get its mating altitude from that spot.  We'll return that later.
+                ret = this._childNodes[rhoIndex][thetaIndex].getMatingAltitude(theta, rho);
+            }
+            else
+            {
+                //No, we don't.  We need to figure out what this node's mating altitude is.
+                var elev0 = this._elevationData[rhoIndex][thetaIndex];
+                var elev1 = this._elevationData[rhoIndex + 1][thetaIndex + 1];
+
+                var elevDiff = elev1 - elev0;
+
+                var theta0 = this._minTheta + (this._thetaStep * thetaIndex);
+                var theta1 = this._minTheta + (this._thetaStep * (thetaIndex + 1));
+
+                var rho0 = this._minRho + (this._rhoStep * rhoIndex);
+                var rho1 = this._minRho + (this._rhoStep * (rhoIndex + 1));
+                
+                var thetaRatio = (theta - theta0) / this._thetaStep;
+                var rhoRatio = (rho - rho0) / this._rhoStep;
+
+                var dist = Math.sqrt(thetaRatio * thetaRatio + rhoRatio * rhoRatio);
+
+                var elev = elev0 + elevDiff * dist;
+
+                ret = elev;
+            }
         }
-        else
+
+        return ret;
+    },
+
+    notifySiblingsOfElevationUpdate: function(sender)
+    {
+        //First, figure out which element the sender is.
+        var minThetaSender = sender.getMinTheta();
+
+        var minRhoSender = sender.getMinRho();
+
+        var thetaDiff = minThetaSender - this._minTheta;
+        var rhoDiff = minRhoSender - this._minRho;
+
+        var thetaIndex = thetaDiff / this._thetaStep;
+        var rhoIndex = rhoDiff / this._rhoStep;
+
+        for(var i = rhoIndex - 1; i < rhoIndex + 1; i++)
         {
-            //Ok, there's no child node
+            var workingRho 
+
+            for(var j = thetaIndex; j < thetaIndex + 1; j++)
+            {
+
+            }
         }
     }
 });
