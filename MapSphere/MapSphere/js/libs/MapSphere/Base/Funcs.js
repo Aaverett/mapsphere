@@ -84,7 +84,7 @@ MapSphere.extractElevationDataFromImage = function(image, whiteval, blackval, xs
 {
     var canvas = document.createElement("canvas");
     canvas.width = image.width;
-    canvas.height =image.height;
+    canvas.height = image.height;
 
     var xsteps1 = xsteps + 1;
     var ysteps1 = ysteps + 1;
@@ -92,6 +92,7 @@ MapSphere.extractElevationDataFromImage = function(image, whiteval, blackval, xs
     var ctx = canvas.getContext("2d");
     ctx.drawImage(image, 0, 0, xsteps1, ysteps1);
 
+    var href = image.href;
 
     var elevData = new Array(ysteps1);
     

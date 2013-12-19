@@ -653,8 +653,11 @@
             //Redo the buffer geometry.
             this._populateBufferGeometry();
 
-            //Tell the parent node that any siblings need to be 
-            this._parentNode.notifySiblingsOfElevationUpdate(this);
+            if (this._parentNode != null)
+            {
+                //Tell the parent node that any siblings need to be 
+                this._parentNode.notifySiblingsOfElevationUpdate(this);
+            }
         }
     },
 
@@ -717,16 +720,27 @@
         var thetaDiff = minThetaSender - this._minTheta;
         var rhoDiff = minRhoSender - this._minRho;
 
-        var thetaIndex = thetaDiff / this._thetaStep;
-        var rhoIndex = rhoDiff / this._rhoStep;
+        var thetaIndex = Math.round(thetaDiff / this._thetaStep);
+        var rhoIndex = Math.round(rhoDiff / this._rhoStep);
 
-        for(var i = rhoIndex - 1; i < rhoIndex + 1; i++)
+        for(var i = -1 ; i <= 1; i++)
         {
-            var workingRho 
+            var workingYIndex = i + rhoIndex;
 
-            for(var j = thetaIndex; j < thetaIndex + 1; j++)
+            if (workingYIndex >= this._steps) workingYIndex = 0;
+            if (workingYIndex < 0) workingYIndex = this._steps - 1;
+
+            for(var j = -1; j <= 1; j++)
             {
+                var workingXIndex = j + thetaIndex;
+                if (workingXIndex >= this._steps) workingXIndex = 0;
+                if (workingXIndex < 0) workingXIndex = this._steps - 1;
 
+                if(MapSphere.notNullNotUndef(this._childNodes[workingYIndex][workingXIndex]))
+                {
+                    //Tell that node to refresh its geometry.
+                    this._childNodes[workingYIndex][workingXIndex]._populateBufferGeometry();
+                }
             }
         }
     }
