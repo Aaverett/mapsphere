@@ -152,17 +152,13 @@ MapSphere.CameraControllers.OrbitCameraController = MapSphere.CameraControllers.
 
         var quaternion3 = quaternion2.multiply(quaternion1); //Combine the two rotations.  Note that this isn't commutative, so doing it the other way gives wacky results.
 
-        //This is the pitch angle.
-        var quaternion4 = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(-1, 0, 0), this.cameraRotX);
-        var quaternion5 = quaternion3.multiply(quaternion4);
+        var tmpQuaternion = new THREE.Quaternion();
+        tmpQuaternion.set(0, -1 * this.cameraRotZ, - 1 * this.cameraRotX, 1).normalize();
 
-        //The yaw angle.
-        var quaternion6 = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, -1, 0), this.cameraRotZ);
-        var quaternion7 = quaternion5.multiply(quaternion6);
+        var q4 = quaternion3.multiply(tmpQuaternion);
 
-        //this.camera.rotation.setFromQuaternion(quaternion7); //Set the camera's euler rotation from our quaternion.
-        this.camera.rotation.setFromQuaternion(quaternion7); //Set the camera's euler rotation from our quaternion.
-
+        this.camera.rotation.setFromQuaternion(q4)
+        
         this.cameraMoved();
 
         //Display the position in the debug pane, if applicable.
