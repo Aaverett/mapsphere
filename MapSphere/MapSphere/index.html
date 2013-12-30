@@ -44,6 +44,15 @@
             var basicEllipsoidLayer = new MapSphere.Layers.BasicEllipsoidLayer(belLayerOpts);
 
             ms.addLayer(basicEllipsoidLayer);
+
+            var agsLayerOpts = {
+                mapServiceURL: "http://coastal.beg.utexas.edu:6080/arcgis/rest/services/GlobalTestService/MapServer",
+                layerIndex: 1
+            };
+
+            var AgsVectorLayer = new MapSphere.Layers.ArcGISVectorLayer(agsLayerOpts);
+
+            ms.addLayer(AgsVectorLayer);
         }
 
         //Run the initialization routine 

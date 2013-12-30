@@ -93,8 +93,10 @@
     <Content Include="js\libs\MapSphere\CameraControllers\OrbitCameraController.js" />
     <Content Include="js\libs\MapSphere\Geography\Envelope.js" />
     <Content Include="js\libs\MapSphere\Geography\LngLat.js" />
+    <Content Include="js\libs\MapSphere\Layers\ArcGISVectorLayer.js" />
     <Content Include="js\libs\MapSphere\Layers\BasicEllipsoidLayer.js" />
     <Content Include="js\libs\MapSphere\Layers\Layer.js" />
+    <Content Include="js\libs\MapSphere\Layers\VectorGeometryLayer.js" />
     <Content Include="js\libs\MapSphere\MapSphere.js" />
     <Content Include="js\libs\MapSphere\MapSphere\MapSphere.js" />
     <Content Include="js\libs\MapSphere\Math\DetailTreeNode.js" />

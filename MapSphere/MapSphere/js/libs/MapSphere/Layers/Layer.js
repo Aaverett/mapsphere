@@ -51,6 +51,11 @@ MapSphere.Layers.Layer = MapSphere.UIEventHost.extend({
         }
     },
 
+    isInitialized: function()
+    {
+        return true;
+    },
+
     initMaterial: function()
     {
         //In this base implementation, we create a basic material that will at least show up as something visible in the scene.

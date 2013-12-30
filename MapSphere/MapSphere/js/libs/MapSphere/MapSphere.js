@@ -31,7 +31,8 @@ MapSphere.scriptFiles =
         "Geography/Envelope.js",
         "Layers/Layer.js",
         "Layers/BasicEllipsoidLayer.js",
-        "Layers/ArcGISRESTLayer.js",
+        "Layers/VectorGeometryLayer.js",
+        "Layers/ArcGISVectorLayer.js",
         "Decorations/Decoration.js",
         "Decorations/StaticTextureDecoration.js",
         "Decorations/ArcGISRESTServiceDecoration.js",
@@ -45,6 +46,7 @@ MapSphere.CameraControllers = {};
 MapSphere.Geography = {};
 MapSphere.Layers = {};
 MapSphere.Decorations = {};
+MapSphere.Constants = {};
 
 (function () {
 

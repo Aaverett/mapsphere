@@ -18,6 +18,7 @@ MapSphere.CameraControllers.OrbitCameraController = MapSphere.CameraControllers.
 
     //These are the Y and Z (pitch and yaw) angles (in radians) for the camera, relative to looking straight down at the ground.
     cameraRotX: 0,
+    cameraRotY: 0,
     cameraRotZ: 0,
 
     init: function (camera, options) {
@@ -69,6 +70,10 @@ MapSphere.CameraControllers.OrbitCameraController = MapSphere.CameraControllers.
         if(this.mouseButtonState[0])
         {
             this.orbitMapWithPixelDelta(x, y);
+        }
+        else if(this.mouseButtonState[1])
+        {
+            this.rollCameraDirectionWithPixelData(x, y);
         }
         else if(this.mouseButtonState[2])
         {
@@ -151,13 +156,13 @@ MapSphere.CameraControllers.OrbitCameraController = MapSphere.CameraControllers.
         var quaternion2 = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 0, 1), MapSphere.degToRad(lon + 90)); //Rotate about the camera's Z axis.
 
         var quaternion3 = quaternion2.multiply(quaternion1); //Combine the two rotations.  Note that this isn't commutative, so doing it the other way gives wacky results.
-
+        
         var tmpQuaternion = new THREE.Quaternion();
-        tmpQuaternion.set(0, -1 * this.cameraRotZ, - 1 * this.cameraRotX, 1).normalize();
+        tmpQuaternion.set(-1 * this.cameraRotX, - 1 * this.cameraRotY, -1 * this.cameraRotZ, 1).normalize();
 
         var q4 = quaternion3.multiply(tmpQuaternion);
 
-        this.camera.rotation.setFromQuaternion(q4)
+        this.camera.rotation.setFromQuaternion(q4, this.camera.rotation.order);
         
         this.cameraMoved();
 
@@ -168,7 +173,7 @@ MapSphere.CameraControllers.OrbitCameraController = MapSphere.CameraControllers.
             MapSphere.updateDebugOutput("orbitcam_rho", MapSphere.degToRad(lat));
             MapSphere.updateDebugOutput("orbitcam_alt", alt);
             MapSphere.updateDebugOutput("orbitcam_rotX", this.cameraRotX);
-            MapSphere.updateDebugOutput("orbitcam_rotZ", this.cameraRotZ);
+            MapSphere.updateDebugOutput("orbitcam_rotZ", this.cameraRotY);
         }
 
         //this.panToCoords(lngLatElev.lng(), lngLatElev.lat(), lngLatElev.elev());
@@ -184,8 +189,17 @@ MapSphere.CameraControllers.OrbitCameraController = MapSphere.CameraControllers.
     panCameraDirectionWithPixelData: function(x, y)
     {
         this.cameraRotX += y * 0.005; //Pitch
-        this.cameraRotZ += x * 0.005; //Yaw
+        this.cameraRotY += x * 0.005; //Yaw
         //The camera doesn't roll.
+
+        this.panToLngLatElev(this.cameraLocation);
+    },
+
+    rollCameraDirectionWithPixelData: function(x, y)
+    {
+        var dist = Math.sqrt(x * x + y * y);
+
+        this.cameraRotZ += x * 0.005;
 
         this.panToLngLatElev(this.cameraLocation);
     },
