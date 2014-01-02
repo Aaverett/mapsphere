@@ -10,7 +10,8 @@
 
 //Create the MapSphere namespace.
 window.MapSphere = {
-    scriptBasePath: "js/libs/MapSphere/"
+    scriptBasePath: "js/libs/MapSphere/",
+    assetBasePath: "assets/"
 };
 
 //Set up the debugging business.
@@ -47,6 +48,8 @@ MapSphere.Geography = {};
 MapSphere.Layers = {};
 MapSphere.Decorations = {};
 MapSphere.Constants = {};
+
+MapSphere.Assets = new Array();
 
 (function () {
 

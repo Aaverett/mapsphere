@@ -14,6 +14,7 @@ MapSphere.Layers.VectorGeometryLayer = MapSphere.Layers.Layer.extend({
     _baseAltitude: 0,
 
     _features: null,
+    _featureIndex: null,
     _featureWrappers: null,
     _zField: null,
     _pkField: null,
@@ -36,26 +37,34 @@ MapSphere.Layers.VectorGeometryLayer = MapSphere.Layers.Layer.extend({
         //Initialize the collection of features.
         this._features = new Array();
         this._featureWrappers = new Array();
+        this._featureIndex = {};
 
         this._mesh = new THREE.Object3D();
+    },
+
+    getFeaturePK: function(feature)
+    {
+        var ret = feature;
+
+        if (this._pkField != null)
+        {
+            ret = feature[this._pkField];
+        }
+
+        return feature[this._pkField];
     },
 
     haveFeature: function(feature)
     {
         var ret = false;
 
-        //If there's a PK field set...
-        if(this._pkField != null)
+        if(MapSphere.notNullNotUndef(this._featureIndex[this.getFeaturePK(feature)]))
         {
-            var ind = $.inArray(feature, this._features)
-            if(ind != -1)
-            {
-                ret = true;
-            }
+            ret = true;
         }
         else
         {
-            //Theoretically, we could compare to every single feature in the collection, but that would be unacceptably slow for large values of N.
+            var i = 0;
         }
 
         return ret;
@@ -66,6 +75,10 @@ MapSphere.Layers.VectorGeometryLayer = MapSphere.Layers.Layer.extend({
         if(!this.haveFeature(feature))
         {
             this._features.push(feature);
+
+            var pkval = this.getFeaturePK(feature);
+
+            this._featureIndex[pkval] = feature;
 
             var wrapper = new MapSphere.Layers.VectorGeometryLayerFeatureWrapper(feature);
 
@@ -80,8 +93,10 @@ MapSphere.Layers.VectorGeometryLayer = MapSphere.Layers.Layer.extend({
         if(this.haveFeature(feature))
         {
             var ind = $.inArray(feature, this._features);
+            var ind2 = $.inArray(feature, this._featureIndex);
 
             this._features.splice(ind, 1);
+            this._featureIndex.splice(ind2, 1);
             var wrapper = this._featureWrappers[ind];
 
             this.removeFeatureWrapper(wrapper);

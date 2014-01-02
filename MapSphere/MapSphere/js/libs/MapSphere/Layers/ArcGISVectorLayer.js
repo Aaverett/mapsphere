@@ -1,15 +1,26 @@
 ﻿//
+
+//Load some assets we'll need later.
+MapSphere.loadTextAsset("shaders/ArcGISPointFeatureVertexShader.glsl", "ArcGISPointFeatureVertexShader");
+MapSphere.loadTextAsset("shaders/ArcGISPointFeatureFragmentShader.glsl", "ArcGISPointFeatureFragmentShader");
+
 MapSphere.Layers.ArcGISVectorLayer = MapSphere.Layers.VectorGeometryLayer.extend({
     _mapServiceURL: null,
     layerIndex: null,
     _mapServiceMetadata: null,
     _mapLayerMetadata: null,
+    _mapLegendMetadata: null,
     _dataRefreshRequested: false,
+    _legendSwatches: null,
+    _pointGeometryMaterials: null,
 
     init: function (options)
     {
         //Do the base initialization.
         this._super(options);
+
+        //Initialize this as an array.
+        this._legendSwatches = new Array();
 
         //Now, retrieve our
         if(MapSphere.notNullNotUndef(options.mapServiceURL))
@@ -22,9 +33,19 @@ MapSphere.Layers.ArcGISVectorLayer = MapSphere.Layers.VectorGeometryLayer.extend
             this.layerIndex = options.layerIndex;
         }
 
-        this.refreshMapServiceMetadata()
+        this.refreshMapServiceMetadata();
+    },
 
+    getFeaturePK: function(feature)
+    {
+        var ret = feature;
 
+        if (this._pkField != null)
+        {
+            ret = feature.attributes[this._pkField];
+        }
+
+        return ret;
     },
 
     isInitialized: function()
@@ -64,6 +85,8 @@ MapSphere.Layers.ArcGISVectorLayer = MapSphere.Layers.VectorGeometryLayer.extend
 
         //Now that we have the service's metadata, we can request the layer's.
         this.requestLayerMetadataFromMapService();
+        //Also, request the metadata for the legend from the map service.
+        this.requestLegendMetadataFromMapService();
     },
 
     requestLayerMetadataFromMapService: function()
@@ -108,6 +131,55 @@ MapSphere.Layers.ArcGISVectorLayer = MapSphere.Layers.VectorGeometryLayer.extend
         if(this.isInitialized() && this._dataRefreshRequested)
         {
             this.refreshGeometry();
+        }
+    },
+
+    requestLegendMetadataFromMapService: function()
+    {
+        var url = this._mapServiceURL + "/legend?f=json";
+
+        var opts = {
+            complete: this.handleRequestLegendMetadataFromMapServiceResponse.bind(this)
+        };
+
+        $.ajax(url, opts);
+    },
+
+    handleRequestLegendMetadataFromMapServiceResponse: function(args)
+    {
+        var responseData = JSON.parse(args.responseText);
+
+        this._mapLegendMetadata = responseData;
+
+        //Now that we have the legend metadata, fetch the legend swatches for this item.
+        this.refreshLegendSwatches();
+    },
+
+    refreshLegendSwatches: function()
+    {
+        if(this._mapLegendMetadata != null)
+        {
+            this._legendSwatches = new Array();
+            if (this._geometryType == MapSphere.Constants.GeometryType_Point)
+            {
+                this._pointGeometryMaterials = new Array();
+            }
+
+            for(var i = 0; i < this._mapLegendMetadata.layers[this.layerIndex].legend.length; i++)
+            {
+                var ldata = this._mapLegendMetadata.layers[this.layerIndex].legend[i];
+    
+                var url = this._mapServiceURL + "/" + this.layerIndex + "/images/" + ldata.url;
+
+                var t = THREE.ImageUtils.loadTexture(url);
+
+                this._legendSwatches.push(t);
+
+                //If this is a point layer, push a null onto the materials array for each class in the legend.
+                if (this._geometryType == MapSphere.Constants.GeometryType_Point) {
+                    this._pointGeometryMaterials.push(null);
+                }
+            }
         }
     },
 
@@ -186,23 +258,95 @@ MapSphere.Layers.ArcGISVectorLayer = MapSphere.Layers.VectorGeometryLayer.extend
         }
     },
 
+    getFeatureLegendClassIndex: function(feature)
+    {
+        
+        var ret = -1;
+        var defaultIndex = 0;
+
+
+        //Get a handle on the relevant bit of the legend metadata.
+        var relevantLegendData = this._mapLegendMetadata.layers[this.layerIndex];
+        var relevantLayerData = this._mapLayerMetadata;
+
+        switch(relevantLayerData.drawingInfo.renderer.type)
+        {
+            case "uniqueValue": ret = this.getFeatureLegendClassIndexUniqueValues(feature);
+                break;
+        }
+
+        if (ret == -1)
+        {
+            ret = defaultIndex;
+        }
+
+        return ret;
+    },
+
+    getFeatureLegendClassIndexUniqueValues: function(feature)
+    {
+        var ret = 0;
+        var defaultDelta = 1; //
+
+        var values = this._mapLayerMetadata.drawingInfo.renderer.uniqueValueInfos;
+
+        var fieldName = this._mapLayerMetadata.drawingInfo.renderer.field1;
+
+        for(var i=0; i < values.length; i++)
+        {
+            var fval = feature.attributes[fieldName];
+
+            if (fval == values[i].value)
+            {
+                //Ok, we found the class.
+                ret = i + defaultDelta;
+                break;
+            }
+        }
+
+        return ret;
+    },
+
     populateFeatureWrapperPoint: function(wrapper)
     {
         //Compose a feature.
         var aGeom = wrapper.getFeature().geometry;
 
-        var position = this._ellipsoid.toCartesianWithLngLatElevValues(aGeom.x, aGeom.y, 50000, true);
+        var position = this._ellipsoid.toCartesianWithLngLatElevValues(aGeom.x, aGeom.y, 90000, true);
 
-        var sphere = new THREE.SphereGeometry(100000, 4, 4);
+        var classIndex = this.getFeatureLegendClassIndex(wrapper.getFeature());
 
-        wrapper.setGeometry(sphere);
+        if (this._pointGeometryMaterials[classIndex] == null) {
+            /*var vshader = MapSphere.Assets["ArcGISPointFeatureVertexShader"];
+            var fshader = MapSphere.Assets["ArcGISPointFeatureFragmentShader"];
 
-        var mat = new THREE.MeshBasicMaterial({ color: 0xFFFF00 });
+            //The stock sprite shader isn't very flexible, so we'll replace it with this custom one.
+            var s = new THREE.ShaderMaterial({
+                vertexShader: vshader,
+                fragmentShader: fshader
+            });
 
+            //For some reason, these don't get set, and then make THREE unhappy when this is rendered on a sprite.
+            s.uvScale = new THREE.Vector2(100000.0, 100000.0);
+            s.uvOffset = new THREE.Vector2(0.0, 0.0);
+            s.color = new THREE.Color(0xffffff);*/
+
+            s = new THREE.SpriteMaterial({map: this._legendSwatches[classIndex]});
+
+            this._pointGeometryMaterials[classIndex] = s;
+        }
+
+        
+        var mat = this._pointGeometryMaterials[classIndex];
+
+        //var g = new THREE.SphereGeometry(100000, 4, 4);
+        //var m = new THREE.Mesh(g, mat);
+
+        var m = new THREE.Sprite(mat);
+        m.position = position;
+        m.scale = new THREE.Vector3(100000, 100000, 100000);
+        wrapper.setGeometry(m);
         wrapper.setMaterial(mat);
-
-        wrapper.createDefaultMesh();
-
-        wrapper.getMesh().position = position;
+        wrapper.setMesh(m);
     }
 });

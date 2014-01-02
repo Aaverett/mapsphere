@@ -178,3 +178,18 @@ MapSphere.createDebugPane = function()
         MapSphere.debugPane = debugPane;
     }
 }
+
+MapSphere.loadTextAsset = function(assetURL, assetKey)
+{
+    MapSphere.Assets[assetKey] = null;
+
+    var opts = {
+        complete: function (args) {
+            MapSphere.Assets[assetKey] = args.responseText;
+        }
+    };
+
+    var url = MapSphere.assetBasePath + assetURL;
+
+    $.ajax(url, opts);
+}
