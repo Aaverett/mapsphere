@@ -13,6 +13,11 @@ MapSphere.Layers.ArcGISVectorLayer = MapSphere.Layers.VectorGeometryLayer.extend
     _dataRefreshRequested: false,
     _legendSwatches: null,
     _pointGeometryMaterials: null,
+    _userPopulateGeometryFunction: null, //Function that is used in place the default geometry generation method.  Use this to override the standard method of geometry.
+    _zFunction: null,               //Function that should be used to compute a z value.  Not used if this is null, obviously.
+    _zField: null,                  //Attribute field that should be used for the Z value
+    _verticalExaggeration: 1.0,     //Vertical exaggeration applied to Z values
+    _useGeometryZ: true,
 
     init: function (options)
     {
@@ -31,6 +36,43 @@ MapSphere.Layers.ArcGISVectorLayer = MapSphere.Layers.VectorGeometryLayer.extend
         if(MapSphere.notNullNotUndef(options.layerIndex))
         {
             this.layerIndex = options.layerIndex;
+        }
+
+        //Function that replaces the standard geometry generation function.
+        if (MapSphere.notNullNotUndef(options.userPopulateGeometryFunction)) {
+            this._userPopulateGeometryFunction = options.userPopulateGeometryFunction;
+        }
+
+        //Function that calculates the z value for the feature as a whole.
+        if (MapSphere.notNullNotUndef(options.zFunction))
+        {
+            this._zFunction = options.zFunction;
+        }
+
+        //The name of a field in the feature to be interrogated for the z value applied to the feature in the scene.
+        if (MapSphere.notNullNotUndef(options.zField))
+        {
+            this._zField = options.zField;
+        }
+
+        //Vertical exaggeration to be applied to the feature.
+        if (MapSphere.notNullNotUndef(options.verticalExaggeration))
+        {
+            //Sanity check - make sure it's actually a number.
+            if (MapSphere.isNumber(options.verticalExaggeration))
+            {
+                this._verticalExaggeration = options.verticalExaggeration;
+            }
+        }
+
+        //A boolean value telling us whether we should use Z values on the native geometry, if present.  To use this, everything else (zField, zFunction should be set to null)
+        if (MapSphere.notNullNotUndef(options.useGeometryZ))
+        {
+            //Default being true, we only modify this if we have an explicit false here.
+            if(options.useGeometryZ === false)
+            {
+                this._verticalExaggeration = false;
+            }
         }
 
         this.refreshMapServiceMetadata();
@@ -221,6 +263,7 @@ MapSphere.Layers.ArcGISVectorLayer = MapSphere.Layers.VectorGeometryLayer.extend
         }
     },
 
+    //This handles the response from the map service when requesting actual feature data
     handleRefreshDataFromMapServiceResponse: function(args)
     {
         //The response should have come back as JSON, so we'll try parsing it.
@@ -243,27 +286,38 @@ MapSphere.Layers.ArcGISVectorLayer = MapSphere.Layers.VectorGeometryLayer.extend
         }
     },
 
+    //Here, we've been asked to generate the 
     populateFeatureWrapper: function(wrapper)
     {
-        switch(this._geometryType)
-        {
-            case MapSphere.Constants.GeometryType_Point: this.populateFeatureWrapperPoint(wrapper);
-                break;
+        //If the user provided a populate function
+        if (this._userPopulateGeometryFunction != null) {
+            var f = this._userPopulateGeometryFunction;
 
-            case MapSphere.Constants.GeometryType_Polyline:
-                break;
+            var m = f(this, wrapper.getFeature());
 
-            case MapSphere.Constants.GeometryType_Polygon:
-                break;
+            wrapper.setMesh(m);
+        }
+        else {
+            switch (this._geometryType) {
+                case MapSphere.Constants.GeometryType_Point: this.populateFeatureWrapperPoint(wrapper);
+                    break;
+
+                case MapSphere.Constants.GeometryType_Polyline: this.populateFeatureWrapperPolyline(wrapper);
+                    break;
+
+                case MapSphere.Constants.GeometryType_Polygon: this.populateFeatureWrapperPolygon();
+                    break;
+            }
         }
     },
 
+    //This is an entry point for the fairly complex set of logic that determines which class in the legend our feature belongs to.  The map service doesn't tell us this, but we can use the
+    //metadata to figure it out.  Because there are so many different ways that the data can be symbolized, all we do here is figure out what type we need, and pass control off the appropriate
+    //method.
     getFeatureLegendClassIndex: function(feature)
     {
-        
         var ret = -1;
         var defaultIndex = 0;
-
 
         //Get a handle on the relevant bit of the legend metadata.
         var relevantLegendData = this._mapLegendMetadata.layers[this.layerIndex];
@@ -271,7 +325,13 @@ MapSphere.Layers.ArcGISVectorLayer = MapSphere.Layers.VectorGeometryLayer.extend
 
         switch(relevantLayerData.drawingInfo.renderer.type)
         {
+            //The unique values type
             case "uniqueValue": ret = this.getFeatureLegendClassIndexUniqueValues(feature);
+                break;
+             
+            //The "simple" type.  (This is the default when you drag a feature class into ArcMap)
+            case "simple":
+            default: ret = defaultIndex; //If we didn't figure out a type specifically, use this default, which should, at least theoretically, always work.
                 break;
         }
 
@@ -283,6 +343,7 @@ MapSphere.Layers.ArcGISVectorLayer = MapSphere.Layers.VectorGeometryLayer.extend
         return ret;
     },
 
+    //Figure out which symbol class a feature belongs to in a unique values scheme.
     getFeatureLegendClassIndexUniqueValues: function(feature)
     {
         var ret = 0;
@@ -307,12 +368,15 @@ MapSphere.Layers.ArcGISVectorLayer = MapSphere.Layers.VectorGeometryLayer.extend
         return ret;
     },
 
+    //Populates a feature wrapper with geometry for a point feature.
     populateFeatureWrapperPoint: function(wrapper)
     {
         //Compose a feature.
         var aGeom = wrapper.getFeature().geometry;
 
-        var position = this._ellipsoid.toCartesianWithLngLatElevValues(aGeom.x, aGeom.y, 90000, true);
+        var zVal = this.getZVal(wrapper.getFeature());        
+
+        var position = this._ellipsoid.toCartesianWithLngLatElevValues(aGeom.x, aGeom.y, zVal, true);
 
         var classIndex = this.getFeatureLegendClassIndex(wrapper.getFeature());
 
@@ -348,5 +412,42 @@ MapSphere.Layers.ArcGISVectorLayer = MapSphere.Layers.VectorGeometryLayer.extend
         wrapper.setGeometry(m);
         wrapper.setMaterial(mat);
         wrapper.setMesh(m);
+    },
+
+    getZVal: function(feature)
+    {
+        //Figure out the Z value.
+        var zVal = 0;
+
+        //If we have a user-defined z function, we go ahead and use it to determine this feature's z value.
+        if (this._zFunction != null) {
+            zVal = this._zFunction(feature);
+        }
+        else //Ok, use the default z value logic.
+        {
+            if (this._zField != null) //If we have a z field specified try to use that.
+            {
+                if (MapSphere.isNumber(feature.attributes[this._zField])) {
+                    zVal = MapSphere.isNumber(feature.attributes[this._zField]);
+                }
+            }
+            else if (MapSphere.notNullNotUndef(feature.geometry.z)) {
+                zVal = feature.geometry.z;
+            }
+        }
+
+        zVal *= zVal * this._verticalExaggeration;
+
+        return zVal;
+    },
+
+    populateFeatureWrapperPolyline: function(wrapper)
+    {
+        //TODO: Implement handling of polylines
+    },
+
+    populateFeatureWrapperPolygon: function(wrapper)
+    {
+        //TODO: Implement handling of polygons.
     }
 });

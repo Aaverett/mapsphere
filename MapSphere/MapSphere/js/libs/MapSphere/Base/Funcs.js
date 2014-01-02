@@ -193,3 +193,9 @@ MapSphere.loadTextAsset = function(assetURL, assetKey)
 
     $.ajax(url, opts);
 }
+
+//Pretty reliable way to test whether a value is a number or not.
+MapSphere.isNumber = function(val)
+{
+    return !isNaN(parseFloat(val)) && isFinite(val);
+}
