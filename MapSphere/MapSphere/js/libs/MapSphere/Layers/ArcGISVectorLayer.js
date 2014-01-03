@@ -395,7 +395,10 @@ MapSphere.Layers.ArcGISVectorLayer = MapSphere.Layers.VectorGeometryLayer.extend
             s.uvOffset = new THREE.Vector2(0.0, 0.0);
             s.color = new THREE.Color(0xffffff);*/
 
-            s = new THREE.SpriteMaterial({map: this._legendSwatches[classIndex]});
+            s = new THREE.SpriteMaterial({
+                map: this._legendSwatches[classIndex],
+                useScreenCoordinates: true
+            });
 
             this._pointGeometryMaterials[classIndex] = s;
         }

@@ -36,6 +36,15 @@ MapSphere.MapSphere = MapSphere.UIEventHost.extend({
 
     _cameraDoneMovingWait: 1000,
 
+    _lastFrameTime: 0,
+    _frameRate: 0,
+    _minFrameRate: 0,
+    _maxFrameRate: 0,
+    _frameCount: 0,
+
+    _lastMouseDownCoords: null,
+    _clickTolerance: 1,
+
     //Constructor
     init: function (targetElement, options) {
         if (MapSphere.notNullNotUndef(options)) {
@@ -207,6 +216,46 @@ MapSphere.MapSphere = MapSphere.UIEventHost.extend({
     renderScene: function () {
         requestAnimationFrame(this.renderScene.bind(this));
         this.renderer.render(this.scene, this.camera);
+
+        //Update the framerate, performance stats, etc.
+        this.updatePerformanceStatistics();
+    },
+
+    updatePerformanceStatistics: function()
+    {
+        var d = new Date();
+
+        var t_millis = d.getTime();
+
+        var deltaT = t_millis - this._lastFrameTime;
+
+        this._lastFrameTime = t_millis;
+
+        this._frameRate = 1000 / deltaT;
+
+        //Don't start tracking this for the first second or so, while stuff gets initialized.
+        if (this._frameCount > 60) {
+            if (Math.round(this._minFrameRate) == 0 || this._frameRate < this._minFrameRate) {
+                this._minFrameRate = this._frameRate;
+            }
+
+            if (this._frameRate > this._maxFrameRate) {
+                this._maxFrameRate = this._frameRate;
+            }
+        }
+        this._frameCount++;
+
+        //Let anything that's listening know that we've updated our performance statistics.
+        this.raiseEvent("performanceStatsUpdated");
+
+        //If the debug flag is set, update the debug features window.
+        if(MapSphere.DEBUG)
+        {
+            MapSphere.updateDebugOutput("framerate", Math.round(this._frameRate * 10) / 10);
+            MapSphere.updateDebugOutput("min_framerate", Math.round(this._minFrameRate * 10) / 10);
+            MapSphere.updateDebugOutput("max_framerate", Math.round(this._maxFrameRate * 10) / 10);
+        }
+
     },
 
     setCameraController: function(newCameraController) {
@@ -249,6 +298,8 @@ MapSphere.MapSphere = MapSphere.UIEventHost.extend({
 
     //Mouse Event handlers
     mouseDown: function (args) {
+        this._lastMouseDownCoords = { x: args.offsetX, y: args.offsetY };
+
         this.cameraController.mouseDown(args);
 
         args.stopPropagation();
@@ -261,6 +312,19 @@ MapSphere.MapSphere = MapSphere.UIEventHost.extend({
     },
 
     mouseClick: function (args) {
+
+        var clickX = args.offsetX;
+        var clickY = args.offsetY;
+
+        //Make sure that the location the user clicked is within the tolerance range for a single click.  
+        if (clickX <= this._lastMouseDownCoords.x + 1 &&
+            clickX >= this._lastMouseDownCoords.x - 1 &&
+            clickY >= this._lastMouseDownCoords.y + 1 && 
+            clickY >= this._lastMouseDownCoords.y - 1)
+        {
+            var w = 0;
+        }
+
         args.stopPropagation();
     },
 
