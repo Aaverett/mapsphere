@@ -144,8 +144,11 @@ MapSphere.Layers.Layer = MapSphere.UIEventHost.extend({
 
         uvs[arrayPosition + 0] = u;
         uvs[arrayPosition + 1] = v;
-    }
+    },
 
-    
+    pickWithRaycaster: function(raycaster)
+    {
+        return null;
+    }
 
 });

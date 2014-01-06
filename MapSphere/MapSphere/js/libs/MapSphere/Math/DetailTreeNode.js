@@ -171,6 +171,8 @@
             this._mesh.remove(this._bMesh);
         }
 
+        this._geometry.computeBoundingSphere();
+
         //Create a new mesh...
         this._bMesh = new THREE.Mesh(this._geometry, this._material);
 

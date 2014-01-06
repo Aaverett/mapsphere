@@ -194,5 +194,10 @@ MapSphere.Layers.VectorGeometryLayerFeatureWrapper = MapSphere.UIEventHost.exten
     createDefaultMesh: function()
     {
         this._mesh = new THREE.Mesh(this._geometry, this._material);
+    },
+
+    pickWithRayCaster: function()
+    {
+
     }
 });

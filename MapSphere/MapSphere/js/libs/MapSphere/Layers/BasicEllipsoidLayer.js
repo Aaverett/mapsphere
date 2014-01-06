@@ -66,5 +66,12 @@ MapSphere.Layers.BasicEllipsoidLayer = MapSphere.Layers.Layer.extend({
         this._mesh = m;
 
         this.raiseEvent("geometryChanged", args);
+    },
+
+    pickWithRaycaster: function(raycaster)
+    {
+        var intersects = raycaster.intersectObject(this._mesh, true);
+
+        var q = 0;
     }
 });

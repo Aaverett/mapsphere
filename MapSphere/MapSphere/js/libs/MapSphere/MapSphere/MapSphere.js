@@ -18,6 +18,9 @@ MapSphere.MapSphere = MapSphere.UIEventHost.extend({
 
     renderer: null,
 
+    raycaster: null,
+    projector: null,
+
     fov: 60,
 
     minCullDistance: 0.1,
@@ -44,6 +47,13 @@ MapSphere.MapSphere = MapSphere.UIEventHost.extend({
 
     _lastMouseDownCoords: null,
     _clickTolerance: 1,
+
+    //Interactivity handlers
+    _leftClickHandler: null,
+    _rightClickHandler: null,
+
+    //Selection
+    _selectedData: null,
 
     //Constructor
     init: function (targetElement, options) {
@@ -78,6 +88,19 @@ MapSphere.MapSphere = MapSphere.UIEventHost.extend({
                     this.layers = options.layers;
                 }
             }
+
+            //Did they pass in click handlers?
+            if(MapSphere.notNullNotUndef(options.rightClickHandler))
+            {
+                this._rightClickHandler = options.rightClickHandler;
+            }
+
+            if(MapSphere.notNullNotUndef(options.leftClickHandler))
+            {
+                this._leftClickHandler = options.leftClickHandler;
+            }
+
+
         }
 
         //Do we have an ellipsoid?  No?  Ok, create a default (earth-size) one.
@@ -114,6 +137,8 @@ MapSphere.MapSphere = MapSphere.UIEventHost.extend({
             this.canvas.mousewheel(this.mouseScroll.bind(this));
 
         }
+
+        this._selectedData = new Array();
 
         //Finally, initialize some member vars.
         this.maxCullDistance = this.ellipsoid.getEquatorialRadius() * 2; //The max cull distance is the farthest distance from the camera that gets rendered.
@@ -175,7 +200,9 @@ MapSphere.MapSphere = MapSphere.UIEventHost.extend({
 
         //For testing purposes, it's nice to have some simple geometry that can be added to the scene.
         if (this.doTestGeometry) {
-            var cube = new THREE.SphereGeometry(this.ellipsoid.getEquatorialRadius(), 36, 36);
+            var dim = this.ellipsoid.getEquatorialRadius() * 2;
+
+            var cube = new THREE.CubeGeometry(dim, dim, dim, 1, 1, 1);
 
             var material = new THREE.MeshLambertMaterial({
                 map: THREE.ImageUtils.loadTexture("assets/bluemarble.jpg")});
@@ -319,10 +346,11 @@ MapSphere.MapSphere = MapSphere.UIEventHost.extend({
         //Make sure that the location the user clicked is within the tolerance range for a single click.  
         if (clickX <= this._lastMouseDownCoords.x + 1 &&
             clickX >= this._lastMouseDownCoords.x - 1 &&
-            clickY >= this._lastMouseDownCoords.y + 1 && 
+            clickY <= this._lastMouseDownCoords.y + 1 && 
             clickY >= this._lastMouseDownCoords.y - 1)
         {
-            var w = 0;
+            //Click detected!
+            this.handleMouseClickAtLocation(clickX, clickY, args.button);
         }
 
         args.stopPropagation();
@@ -376,6 +404,64 @@ MapSphere.MapSphere = MapSphere.UIEventHost.extend({
             this.scene.add(args.newMesh);
             this.scene.remove(args.oldMesh);
         }
-    }
+    },
     //end of layer event handlers
+
+    handleMouseClickAtLocation: function(clickX, clickY, button)
+    {
+        if(button == 0) //Left click
+        {
+            if(this._leftClickHandler != null)
+            {
+                //User-defined left click handler...
+                this._leftClickHandler(clickX, clickY);
+            }
+            else
+            {
+                //Default behavior is picking in the scene.
+                this.pickWithScreenCoords(clickX, clickY);
+            }
+        }
+        else if(button == 2) //Right click
+        {
+            if(this._rightClickHandler != null)
+            {
+                this._rightClickHandler(clickX, clickY);
+            }
+            else
+            {
+                //Default behavior is... not sure yet.  Do nothing for now.
+            }
+        }
+    },
+
+    //Handles picking in the scene.
+    pickWithScreenCoords: function(screenX, screenY)
+    {
+        var xpos, ypos;
+
+        xpos = (screenX / this.canvas.width()) * 2 - 1;
+        ypos = -(screenY / this.canvas.height()) * 2 + 1;
+        
+        //Create a normalized screen space vector...
+        var vector = new THREE.Vector3(xpos, ypos, 1.0).normalize();
+        
+        //Unproject the vector back into scene space.
+        this.projector.unprojectVector(vector, this.camera);
+
+        this.raycaster.set(this.camera.position, vector.sub(this.camera.position).normalize());
+
+        var selectedData = new Array();
+
+        //For each layer that allows picking, we need to test for intersection.
+        for(var i =0; i < this.layers.length; i++)
+        {
+            var selectedFromLayer = this.layers[i].pickWithRaycaster(this.raycaster);
+
+            if(MapSphere.notNullNotUndef(selectedFromLayer))
+            {
+                selectedData = selectedData.concat(selectedFromLayer);
+            }
+        }
+    }
 })
