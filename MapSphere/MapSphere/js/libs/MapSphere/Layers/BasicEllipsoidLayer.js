@@ -65,6 +65,9 @@ MapSphere.Layers.BasicEllipsoidLayer = MapSphere.Layers.Layer.extend({
 
         this._mesh = m;
 
+        //
+        this._mesh.userData = this;
+
         this.raiseEvent("geometryChanged", args);
     },
 
@@ -72,6 +75,6 @@ MapSphere.Layers.BasicEllipsoidLayer = MapSphere.Layers.Layer.extend({
     {
         var intersects = raycaster.intersectObject(this._mesh, true);
 
-        var q = 0;
+        return intersects;
     }
 });

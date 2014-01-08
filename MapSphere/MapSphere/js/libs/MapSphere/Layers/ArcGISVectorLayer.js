@@ -18,6 +18,9 @@ MapSphere.Layers.ArcGISVectorLayer = MapSphere.Layers.VectorGeometryLayer.extend
     _zField: null,                  //Attribute field that should be used for the Z value
     _verticalExaggeration: 1.0,     //Vertical exaggeration applied to Z values
     _useGeometryZ: true,
+    _particleSystems: null,
+    _particleGeometries: null,
+    _tiles: 16,
 
     init: function (options)
     {
@@ -202,9 +205,13 @@ MapSphere.Layers.ArcGISVectorLayer = MapSphere.Layers.VectorGeometryLayer.extend
         if(this._mapLegendMetadata != null)
         {
             this._legendSwatches = new Array();
+
+            //If we know our data is of the point geometry type...
             if (this._geometryType == MapSphere.Constants.GeometryType_Point)
             {
                 this._pointGeometryMaterials = new Array();
+                this._particleSystems = new Array();
+                this._particleGeometries = new Array();
             }
 
             for(var i = 0; i < this._mapLegendMetadata.layers[this.layerIndex].legend.length; i++)
@@ -220,9 +227,27 @@ MapSphere.Layers.ArcGISVectorLayer = MapSphere.Layers.VectorGeometryLayer.extend
                 //If this is a point layer, push a null onto the materials array for each class in the legend.
                 if (this._geometryType == MapSphere.Constants.GeometryType_Point) {
                     this._pointGeometryMaterials.push(null);
+                    this._particleSystems[i] = new Array();
+                    this._particleGeometries[i] = new Array();
+
+                    for(var j =0; j < this._tiles; j++)
+                    {
+                        this._particleSystems[i][j] = new Array();
+                        this._particleGeometries[i][j] = new Array();
+
+                        for(var k=0; k < this._tiles; k++)
+                        {
+                            this._particleSystems[i][j][k] = null;
+                            this._particleGeometries[i][j][k] = null;
+                        }
+                    }
+
+                    //Given that we're refreshing the legend swatches, at some point we should 
                 }
             }
         }
+
+        
     },
 
     refreshGeometry: function()
@@ -272,13 +297,16 @@ MapSphere.Layers.ArcGISVectorLayer = MapSphere.Layers.VectorGeometryLayer.extend
         if(MapSphere.notNullNotUndef(data.features))
         {
             //Great, we've got features.
+            var pendingFeatures = new Array();
 
             for(var i=0; i < data.features.length; i++)
             {
                 var feature = data.features[i];
 
-                this.addFeature(feature);
+                pendingFeatures.push(feature);
             }
+
+            this.addFeatures(pendingFeatures);
         }
         else
         {
@@ -306,6 +334,25 @@ MapSphere.Layers.ArcGISVectorLayer = MapSphere.Layers.VectorGeometryLayer.extend
                     break;
 
                 case MapSphere.Constants.GeometryType_Polygon: this.populateFeatureWrapperPolygon();
+                    break;
+            }
+        }
+    },
+
+    populateFeatureWrappers: function(wrappers)
+    {
+        if(this._userPopulateGeometryFunction != null)
+        {
+
+        }
+        else {
+            switch(this._geometryType)
+            {
+                case MapSphere.Constants.GeometryType_Point: this.populateFeatureWrappersPoint(wrappers);
+                    break;
+                case MapSphere.Constants.GeometryType_Polyline:
+                    break;
+                case MapSphere.Constants.GeometryType_Polygon:
                     break;
             }
         }
@@ -347,7 +394,7 @@ MapSphere.Layers.ArcGISVectorLayer = MapSphere.Layers.VectorGeometryLayer.extend
     getFeatureLegendClassIndexUniqueValues: function(feature)
     {
         var ret = 0;
-        var defaultDelta = 1; //
+        var defaultDelta = 0; //I forget why I added this, but it needs to be 1 sometimes.
 
         var values = this._mapLayerMetadata.drawingInfo.renderer.uniqueValueInfos;
 
@@ -368,6 +415,23 @@ MapSphere.Layers.ArcGISVectorLayer = MapSphere.Layers.VectorGeometryLayer.extend
         return ret;
     },
 
+    populateFeatureWrappersPoint: function(wrappers)
+    {
+        for(var i = 0; i < wrappers.length; i++)
+        {
+            var wrapper = wrappers[i];
+
+            //Compose a vertex at that position.
+            var aGeom = wrapper.getFeature().geometry;
+
+            var zVal = this.getZVal(wrapper.getFeature());
+
+            var position = this._ellipsoid.toCartesianWithLngLatElevValues(aGeom.x, aGeom.y, zVal, true);
+
+            wrapper.setGeometry(position);
+        }
+    },
+
     //Populates a feature wrapper with geometry for a point feature.
     populateFeatureWrapperPoint: function(wrapper)
     {
@@ -375,46 +439,41 @@ MapSphere.Layers.ArcGISVectorLayer = MapSphere.Layers.VectorGeometryLayer.extend
         var aGeom = wrapper.getFeature().geometry;
 
         var zVal = this.getZVal(wrapper.getFeature());        
-
+     
         var position = this._ellipsoid.toCartesianWithLngLatElevValues(aGeom.x, aGeom.y, zVal, true);
 
         var classIndex = this.getFeatureLegendClassIndex(wrapper.getFeature());
 
+        //If the material for this particle doesn't exist yet...
         if (this._pointGeometryMaterials[classIndex] == null) {
-            /*var vshader = MapSphere.Assets["ArcGISPointFeatureVertexShader"];
-            var fshader = MapSphere.Assets["ArcGISPointFeatureFragmentShader"];
-
-            //The stock sprite shader isn't very flexible, so we'll replace it with this custom one.
-            var s = new THREE.ShaderMaterial({
-                vertexShader: vshader,
-                fragmentShader: fshader
-            });
-
-            //For some reason, these don't get set, and then make THREE unhappy when this is rendered on a sprite.
-            s.uvScale = new THREE.Vector2(100000.0, 100000.0);
-            s.uvOffset = new THREE.Vector2(0.0, 0.0);
-            s.color = new THREE.Color(0xffffff);*/
-
-            s = new THREE.SpriteMaterial({
+            //Create it.
+            var s = new THREE.ParticleBasicMaterial({
                 map: this._legendSwatches[classIndex],
-                useScreenCoordinates: true
+                size: 500000
+
+                //color: 0xffffff
             });
 
             this._pointGeometryMaterials[classIndex] = s;
         }
 
+        var LOD = this.getCurrentLod();
         
         var mat = this._pointGeometryMaterials[classIndex];
 
-        //var g = new THREE.SphereGeometry(100000, 4, 4);
-        //var m = new THREE.Mesh(g, mat);
+        //If the particle system for this class doesn't exist yet...
+        if (this._particleSystems[classIndex] == null)
+        {
+            this._particleSystems[classIndex] = new Array();
+        }
 
-        var m = new THREE.Sprite(mat);
-        m.position = position;
-        m.scale = new THREE.Vector3(100000, 100000, 100000);
-        wrapper.setGeometry(m);
+        //Which tile in that LOD are we looking at?
+
+        this._particleGeometries[classIndex].vertices.push(position);
+        
+        wrapper.setGeometry(null);
         wrapper.setMaterial(mat);
-        wrapper.setMesh(m);
+        wrapper.setMesh(this._particleSystems[classIndex]);
     },
 
     getZVal: function(feature)
@@ -439,7 +498,7 @@ MapSphere.Layers.ArcGISVectorLayer = MapSphere.Layers.VectorGeometryLayer.extend
             }
         }
 
-        zVal *= zVal * this._verticalExaggeration;
+        zVal = zVal * this._verticalExaggeration;
 
         return zVal;
     },
@@ -452,5 +511,128 @@ MapSphere.Layers.ArcGISVectorLayer = MapSphere.Layers.VectorGeometryLayer.extend
     populateFeatureWrapperPolygon: function(wrapper)
     {
         //TODO: Implement handling of polygons.
-    }
+    },
+
+    pickWithRayCaster: function(wrapper)
+    {
+
+    },
+
+    //Override the base feature wrappers changed method
+    featureWrappersChanged: function (changed) {
+        switch (this._geometryType) {
+            case MapSphere.Constants.GeometryType_Point: this.featureWrappersChangedPoints(changed);
+                break;
+            case MapSphere.Constants.GeometryType_Polyline: this._super();
+                break;
+            case MapSphere.Constants.GeometryType_Polygon: this._super();
+                break;
+        }
+    },
+
+    featureWrappersChangedPoints: function(changed)
+    {
+        //Compose an array to hold our geometry objects.
+        var geometries = new Array();
+        var particleSystems = new Array();
+
+        //Ok, this is kind of ugly.  This will be a three-deep for loop because this is a three layer array.
+        //First level is the legend classes.
+        //Second level is the Y index.
+        //Third level is the X index.
+        for (var i = 0; i < this._legendSwatches.length; i++) {
+            geometries[i] = new Array();
+            particleSystems[i] = new Array();
+
+            for(var j = 0; j < this._tiles; j++)
+            {
+                geometries[i][j] = new Array();
+                particleSystems[i][j] = new Array();
+
+                for(var k = 0; k < this._tiles; k++)
+                {
+                    geometries[i][j][k] = null;
+                    particleSystems[i][j][k] = null;
+                }
+            }
+        }
+        
+        //for each wrapper in our collection of wrappers...
+        for(var i=0; i < this._featureWrappers.length; i++)
+        {
+            var wrapper = this._featureWrappers[i];
+
+            var classIndex = this.getFeatureLegendClassIndex(wrapper.getFeature());
+            var locIndices = this.getFeatureLocIndices(wrapper.getFeature());
+            
+            //Create the material, if needed.
+            if (this._pointGeometryMaterials[classIndex] == null) {
+                //Create it.
+                var s = new THREE.ParticleBasicMaterial({
+                    map: this._legendSwatches[classIndex],
+                    size: 20,
+                    sizeAttenuation: false,
+                    transparency: true,
+                    alphaTest: 0.5
+
+                    //color: 0xffffff
+                });
+
+                this._pointGeometryMaterials[classIndex] = s;
+            }
+
+            //Create the geometry object, if it doesn't exist yet.
+            if (geometries[classIndex][locIndices.y][locIndices.x] == null)
+            {
+                geometries[classIndex][locIndices.y][locIndices.x] = new THREE.Geometry();
+                particleSystems[classIndex][locIndices.y][locIndices.x] = new THREE.ParticleSystem(geometries[classIndex][locIndices.y][locIndices.x], this._pointGeometryMaterials[classIndex]);
+            }
+
+            geometries[classIndex][locIndices.y][locIndices.x].vertices.push(wrapper.getGeometry());
+            wrapper.setMesh(particleSystems[classIndex][locIndices.y][locIndices.x]);
+        }
+
+        //finally, remove and replace the existing particle systems.
+        for(var i=0; i < this._particleSystems.length; i++)
+        {
+            for (var j = 0; j < particleSystems[i].length; j++)
+            {
+                for(var k=0; k < particleSystems[i][j].length; k++)
+                {
+                    if (particleSystems[i][j][k] != null)
+                    {
+                        this._mesh.remove(this._particleSystems[i][j][k]);
+                        this._particleSystems[i][j][k] = particleSystems[i][j][k];
+                        this._mesh.add(this._particleSystems[i][j][k]);
+                    }
+                }
+            }
+        }
+
+        var q = 0;
+    },
+
+    getFeatureLocIndices: function(feature)
+    {
+        var xpos, ypos;
+        var ret = { x: 0, y: 0};
+
+        switch(this._geometryType)
+        {
+            
+            case MapSphere.Constants.GeometryType_Point:
+                xpos = feature.geometry.x;
+                ypos = feature.geometry.y;
+                break;
+            case MapSphere.Constants.GeometryType_Polyline: this._super();
+                break;
+            case MapSphere.Constants.GeometryType_Polygon: this._super();
+                break;
+        }
+
+        ret.x = Math.floor((180.0 + xpos) / this._tiles);
+        ret.y = Math.floor((90.0 + ypos) / this._tiles)
+
+        return ret;
+    },
 });

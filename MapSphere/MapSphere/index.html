@@ -47,7 +47,10 @@
 
             var agsLayerOpts = {
                 mapServiceURL: "http://coastal.beg.utexas.edu:6080/arcgis/rest/services/GlobalTestService/MapServer",
-                layerIndex: 0
+                layerIndex: 0,
+                zFunction: function (feature) {
+                    return 50000;
+                }
             };
 
             var AgsVectorLayer = new MapSphere.Layers.ArcGISVectorLayer(agsLayerOpts);
