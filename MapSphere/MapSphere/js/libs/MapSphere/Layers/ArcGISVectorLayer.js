@@ -20,8 +20,7 @@ MapSphere.Layers.ArcGISVectorLayer = MapSphere.Layers.VectorGeometryLayer.extend
     _useGeometryZ: true,
     _particleSystems: null,
     _particleGeometries: null,
-    _tiles: 16,
-
+    
     init: function (options)
     {
         //Do the base initialization.
@@ -252,8 +251,6 @@ MapSphere.Layers.ArcGISVectorLayer = MapSphere.Layers.VectorGeometryLayer.extend
 
     refreshGeometry: function()
     {
-        this._super();
-
         this.requestFeatureDataFromMapService();
     },
 
@@ -312,6 +309,10 @@ MapSphere.Layers.ArcGISVectorLayer = MapSphere.Layers.VectorGeometryLayer.extend
         {
             //Uh oh.  For some reason, we didn't have features come back from the map service.
         }
+
+        //We left the refresh geometry function's context, so we can't just call _super here, but this, theoretically, does the same thing.
+        var func = this.__proto__.__proto__.refreshGeometry.bind(this);
+        func();
     },
 
     //Here, we've been asked to generate the 
@@ -610,29 +611,5 @@ MapSphere.Layers.ArcGISVectorLayer = MapSphere.Layers.VectorGeometryLayer.extend
         }
 
         var q = 0;
-    },
-
-    getFeatureLocIndices: function(feature)
-    {
-        var xpos, ypos;
-        var ret = { x: 0, y: 0};
-
-        switch(this._geometryType)
-        {
-            
-            case MapSphere.Constants.GeometryType_Point:
-                xpos = feature.geometry.x;
-                ypos = feature.geometry.y;
-                break;
-            case MapSphere.Constants.GeometryType_Polyline: this._super();
-                break;
-            case MapSphere.Constants.GeometryType_Polygon: this._super();
-                break;
-        }
-
-        ret.x = Math.floor((180.0 + xpos) / this._tiles);
-        ret.y = Math.floor((90.0 + ypos) / this._tiles)
-
-        return ret;
-    },
+    }
 });

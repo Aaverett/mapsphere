@@ -37,7 +37,7 @@
             var agsDec1 = new MapSphere.Decorations.ArcGISRESTServiceElevationDecoration(mapServiceOptions1);
             
             var belLayerOpts = {
-                decorations: [agsDec, agsDec1]
+                //decorations: [agsDec, agsDec1]
             };
 
             
@@ -45,17 +45,22 @@
 
             ms.addLayer(basicEllipsoidLayer);
 
+            //Create the pushpin decoration for the vector layer.
+            var pushpinDec = new MapSphere.Decorations.PushpinVectorDecoration({});
+
             var agsLayerOpts = {
                 mapServiceURL: "http://coastal.beg.utexas.edu:6080/arcgis/rest/services/GlobalTestService/MapServer",
                 layerIndex: 0,
                 zFunction: function (feature) {
                     return 50000;
-                }
+                },
+
+                decorations: [pushpinDec]
             };
 
             var AgsVectorLayer = new MapSphere.Layers.ArcGISVectorLayer(agsLayerOpts);
 
-            ms.addLayer(AgsVectorLayer);
+            //ms.addLayer(AgsVectorLayer);
         }
 
         //Run the initialization routine 

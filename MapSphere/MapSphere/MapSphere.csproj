@@ -83,6 +83,7 @@
     <Content Include="js\libs\MapSphere\Decorations\ArcGISRESTServiceDecoration.js" />
     <Content Include="js\libs\MapSphere\Decorations\ArcGISRESTServiceElevationDecoration.js" />
     <Content Include="js\libs\MapSphere\Decorations\Decoration.js" />
+    <Content Include="js\libs\MapSphere\Decorations\PushpinVectorDecoration.js" />
     <Content Include="js\libs\MapSphere\Decorations\StaticTextureDecoration.js" />
     <Content Include="js\libs\JQuery\jquery.mousewheel.js" />
     <Content Include="js\libs\MapSphere\CameraControllers\CameraController.js" />

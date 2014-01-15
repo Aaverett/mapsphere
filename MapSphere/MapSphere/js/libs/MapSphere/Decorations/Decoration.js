@@ -150,5 +150,15 @@ MapSphere.Decorations.Decoration = MapSphere.UIEventHost.extend({
         };
 
         req.callback(args);
+    },
+
+    //Feature layers have an array of feature "wrappers" that contain a handle to both the raw feature data, and the relevant geometry
+    //for that feature.
+    getFeatureWrappers: function()
+    {
+        if(MapSphere.notNullNotUndef(this._featureWrappers))
+        {
+            return this._featureWrappers;
+        }
     }
 });

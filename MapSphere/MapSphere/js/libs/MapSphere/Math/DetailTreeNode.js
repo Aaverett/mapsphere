@@ -488,8 +488,14 @@
         maxTheta = this._minTheta + (thetaIndex + 1) * thetaStep;
         minRho = this._minRho + (rhoIndex * rhoStep);
         maxRho = this._minRho + ((rhoIndex + 1) * rhoStep);
+        var steps = this._steps / 2;
 
-        var childNode = new MapSphere.Math.DetailTreeNode(this, minTheta, maxTheta, minRho, maxRho, this._ellipsoid, this._steps, this._altitude, this._decorations);
+        if (steps < this._lodAggressionX || steps < this._lodAggressionY)
+        {
+
+        }
+
+        var childNode = new MapSphere.Math.DetailTreeNode(this, minTheta, maxTheta, minRho, maxRho, this._ellipsoid, steps, this._altitude, this._decorations);
 
         this._childNodes[rhoIndex][thetaIndex] = childNode;
 

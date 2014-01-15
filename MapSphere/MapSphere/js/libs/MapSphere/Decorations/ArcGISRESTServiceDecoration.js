@@ -61,7 +61,7 @@
     refreshContents: function()
     {
         //If we're able to refresh the map...
-        if (!this._needsRefresh && this.checkCanRequestMap())
+        if (this._needsRefresh && this.checkCanRequestMap())
         {
             this.refreshMap();
         }
@@ -204,6 +204,8 @@
     
     handleTextureRequest: function(req)
     {
+
+
         //Set the request as pending.
         req.pending = true;
 

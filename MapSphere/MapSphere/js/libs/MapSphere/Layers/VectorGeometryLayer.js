@@ -21,8 +21,12 @@ MapSphere.Layers.VectorGeometryLayer = MapSphere.Layers.Layer.extend({
 
     _geometryType: MapSphere.Constants.GeometryType_Point,
 
+
     //The mesh or collection thereof that participates in the scene.
     _mesh: null,
+
+    //Tiles - this is the number of tiles that the globe is broken up into.
+    _tiles: 16,
 
     init: function(options)
     {
@@ -232,6 +236,36 @@ MapSphere.Layers.VectorGeometryLayer = MapSphere.Layers.Layer.extend({
         while(deltaRhoRad > height || deltaThetaRad > width);
 
         return lod;
+    },
+
+    //Returns a handle on the feature wrappers array.
+    getFeatureWrappers: function()
+    {
+        return this._featureWrappers;
+    },
+        
+    getFeatureLocIndices: function(feature)
+    {
+        var xpos, ypos;
+        var ret = { x: 0, y: 0};
+
+        switch(this._geometryType)
+        {
+            
+            case MapSphere.Constants.GeometryType_Point:
+                xpos = feature.geometry.x;
+                ypos = feature.geometry.y;
+                break;
+            case MapSphere.Constants.GeometryType_Polyline: this._super();
+                break;
+            case MapSphere.Constants.GeometryType_Polygon: this._super();
+                break;
+        }
+
+        ret.x = Math.floor((180.0 + xpos) / this._tiles);
+        ret.y = Math.floor((90.0 + ypos) / this._tiles)
+
+        return ret;
     }
 });
 

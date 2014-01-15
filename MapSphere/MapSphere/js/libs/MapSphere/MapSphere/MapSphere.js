@@ -307,16 +307,16 @@ MapSphere.MapSphere = MapSphere.UIEventHost.extend({
         this._visibleExtent = args.extent;
 
         this.cameraDoneMovingTimer = window.setTimeout(this.handleCameraDoneMovingTimeout.bind(this), this._cameraDoneMovingWait);
+
+        //Request that each layer refresh its geometry.
+        for (var i = 0; i < this.layers.length; i++) {
+            this.layers[i].setVisibleExtent(this._visibleExtent);
+            this.layers[i].refreshGeometry();
+        }
     },
 
     handleCameraDoneMovingTimeout: function (args) {
         
-        //Request that each layer refresh its geometry.
-        for(var i=0; i < this.layers.length; i++)
-        {
-            this.layers[i].setVisibleExtent(this._visibleExtent);
-            this.layers[i].refreshGeometry();
-        }
     },
 
     resize: function (width, height) {
