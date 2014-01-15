@@ -37,7 +37,7 @@
             var agsDec1 = new MapSphere.Decorations.ArcGISRESTServiceElevationDecoration(mapServiceOptions1);
             
             var belLayerOpts = {
-                //decorations: [agsDec, agsDec1]
+                decorations: [agsDec, agsDec1]
             };
 
             
@@ -60,7 +60,7 @@
 
             var AgsVectorLayer = new MapSphere.Layers.ArcGISVectorLayer(agsLayerOpts);
 
-            //ms.addLayer(AgsVectorLayer);
+            ms.addLayer(AgsVectorLayer);
         }
 
         //Run the initialization routine 

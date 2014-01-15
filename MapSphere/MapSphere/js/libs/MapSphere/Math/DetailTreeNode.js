@@ -488,7 +488,7 @@
         maxTheta = this._minTheta + (thetaIndex + 1) * thetaStep;
         minRho = this._minRho + (rhoIndex * rhoStep);
         maxRho = this._minRho + ((rhoIndex + 1) * rhoStep);
-        var steps = this._steps / 2;
+        var steps = this._steps; // / 2;
 
         if (steps < this._lodAggressionX || steps < this._lodAggressionY)
         {

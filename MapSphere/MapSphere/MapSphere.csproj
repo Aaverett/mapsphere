@@ -83,6 +83,7 @@
     <Content Include="js\libs\MapSphere\Decorations\ArcGISRESTServiceDecoration.js" />
     <Content Include="js\libs\MapSphere\Decorations\ArcGISRESTServiceElevationDecoration.js" />
     <Content Include="js\libs\MapSphere\Decorations\Decoration.js" />
+    <Content Include="js\libs\MapSphere\Decorations\OpenLayersTiledServiceDecoration.js" />
     <Content Include="js\libs\MapSphere\Decorations\PushpinVectorDecoration.js" />
     <Content Include="js\libs\MapSphere\Decorations\StaticTextureDecoration.js" />
     <Content Include="js\libs\JQuery\jquery.mousewheel.js" />
@@ -92,6 +93,7 @@
     <Content Include="js\libs\MapSphere\Base\Funcs.js" />
     <Content Include="js\libs\MapSphere\Base\UIEventHost.js" />
     <Content Include="js\libs\MapSphere\CameraControllers\OrbitCameraController.js" />
+    <Content Include="js\libs\MapSphere\Decorations\TiledServiceDecoration.js" />
     <Content Include="js\libs\MapSphere\Geography\Envelope.js" />
     <Content Include="js\libs\MapSphere\Geography\LngLat.js" />
     <Content Include="js\libs\MapSphere\Layers\ArcGISVectorLayer.js" />
