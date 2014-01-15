@@ -144,7 +144,8 @@
         }
     },
 
-    handleRefreshMapResponse: function(args) {
+    handleRefreshMapResponse: function (args) {
+
         var responseData = JSON.parse(args.responseText);
 
         var imageUrl = responseData.href;

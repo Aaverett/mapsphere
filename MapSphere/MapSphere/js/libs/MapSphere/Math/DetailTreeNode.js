@@ -25,8 +25,8 @@
     _bMesh: null,
 
     _enhancedNodeCount: 0,
-    _lodAggressionX: 4,
-    _lodAggressionY: 4,
+    _lodAggressionX: 3,
+    _lodAggressionY: 3,
     _decorations: null,
 
     init: function(parent, minTheta, maxTheta, minRho, maxRho, ellipsoid, steps, altitude, decorations)
@@ -500,6 +500,7 @@
         this._childNodes[rhoIndex][thetaIndex] = childNode;
 
         this._mesh.add(childNode.getMesh());
+        this._mesh.remove(this._bMesh); //Remove the current level geometry from the scene graph.  It's mostly out of view anyway.
 
         this._enhancedNodeCount++;
     },

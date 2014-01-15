@@ -33,7 +33,8 @@
                 heightMapLayerIndex: 0
             };
 
-            var agsDec = new MapSphere.Decorations.ArcGISRESTServiceDecoration(mapServiceOptions);
+            //var agsDec = new MapSphere.Decorations.ArcGISRESTServiceDecoration(mapServiceOptions);
+            var agsDec = new MapSphere.Decorations.OpenLayersTiledServiceDecoration({});
             var agsDec1 = new MapSphere.Decorations.ArcGISRESTServiceElevationDecoration(mapServiceOptions1);
             
             var belLayerOpts = {
@@ -60,7 +61,7 @@
 
             var AgsVectorLayer = new MapSphere.Layers.ArcGISVectorLayer(agsLayerOpts);
 
-            ms.addLayer(AgsVectorLayer);
+            //ms.addLayer(AgsVectorLayer);
         }
 
         //Run the initialization routine 

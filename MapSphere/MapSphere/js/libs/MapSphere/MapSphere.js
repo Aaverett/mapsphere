@@ -39,6 +39,8 @@ MapSphere.scriptFiles =
         "Decorations/ArcGISRESTServiceDecoration.js",
         "Decorations/ArcGISRESTServiceElevationDecoration.js",
         "Decorations/PushpinVectorDecoration.js",
+        "Decorations/TiledServiceDecoration.js",
+        "Decorations/OpenLayersTiledServiceDecoration.js",
         "MapSphere/MapSphere.js"
     ];
 

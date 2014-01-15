@@ -199,3 +199,8 @@ MapSphere.isNumber = function(val)
 {
     return !isNaN(parseFloat(val)) && isFinite(val);
 }
+
+MapSphere.asinh = function(arg)
+{
+    return Math.log(arg + Math.sqrt(arg * arg + 1));
+}
