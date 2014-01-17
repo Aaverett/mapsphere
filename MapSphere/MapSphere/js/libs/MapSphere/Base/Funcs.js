@@ -66,12 +66,6 @@ MapSphere.stackTextures = function(textures)
         }
     }
 
-    /*var img1 = $("#img1")[0];
-    var img2 = $("#img2")[0];
-    ctx.drawImage(img1, 0, 0, 1500, 1000);
-    ctx.drawImage(img2, 0, 0, 1500, 1000);*/
-
-
     var finalTex = new THREE.Texture(canvas);
     finalTex.needsUpdate = true;
 
