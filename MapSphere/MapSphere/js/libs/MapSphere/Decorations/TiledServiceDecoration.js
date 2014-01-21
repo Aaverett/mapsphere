@@ -39,7 +39,7 @@ MapSphere.Decorations.TiledServiceDecoration = MapSphere.Decorations.Decoration.
         }
         else if (yIndex == Infinity)
         {
-            yIndex = Math.pow(2, zoomLevel) - 1;
+            yIndex = Math.pow(2, zoomLevel);
         }
 
         //Compose an object containing the tile indices, and return it.
@@ -229,7 +229,7 @@ MapSphere.Decorations.TiledServiceDecoration = MapSphere.Decorations.Decoration.
         if (practicalMinY < this._tileSetMinLat) prcaticalMinY = this._tileSetMinLat;
 
         var tileFractionalWidth = (practicalMaxX - practicalMinX)  / (numTilesX * 360);
-        var tileFractionalHeight = (practicalMaxY - practicalMinY) / (numTilesY * 360);
+        var tileFractionalHeight = (practicalMaxY - practicalMinY) / (numTilesY * 180);
 
         var fractionX = ((requestedExtentMinX - practicalMinX) / requestedExtentX) + (tile.x * tileFractionalWidth);
         var fractionY = (((requestedExtentMaxY - practicalMaxY) / requestedExtentY) + (tile.y * tileFractionalHeight));
@@ -241,7 +241,7 @@ MapSphere.Decorations.TiledServiceDecoration = MapSphere.Decorations.Decoration.
 
         var posX = fractionX * canvas.width;
         var posY = fractionY * canvas.height;
-        var finalWidth = tileFractionalWidth * canvas.width;;
+        var finalWidth = tileFractionalWidth * canvas.width;
         var finalHeight = tileFractionalHeight * canvas.height;
 
         ctx.drawImage(img, posX, posY, finalWidth, finalHeight);
