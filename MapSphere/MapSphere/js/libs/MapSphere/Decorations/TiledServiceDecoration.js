@@ -23,19 +23,24 @@ MapSphere.Decorations.TiledServiceDecoration = MapSphere.Decorations.Decoration.
 
     getTileIndicesForCoords: function(coord, zoomLevel)
     {
-        var xIndex, yIndex;
+        //Thi
+        function long2tile(lon, zoom) { return (Math.floor((lon + 180) / 360 * Math.pow(2, zoom))); }
+        function lat2tile(lat, zoom) {
+            return (Math.floor((1 - Math.log(Math.tan(lat * Math.PI / 180) + 1 / Math.cos(lat * Math.PI / 180)) / Math.PI) / 2 * Math.pow(2, zoom)));
+        }
 
-        //Reproject to webMercator.
-        var x = MapSphere.degToRad(coord.lng());
-        var y = MapSphere.asinh(Math.tan(MapSphere.degToRad(coord.lat())));
+        var xIndex = long2tile(coord.lng(), zoomLevel);
+        var yIndex = lat2tile(coord.lat(), zoomLevel);
 
-        x = (1 + (x / Math.PI)) / 2;
-        y = (1 - (y / Math.PI)) / 2;
-
-        var numTiles = Math.pow(2, zoomLevel);
-
-        xIndex = Math.floor(x * numTiles);
-        yIndex = Math.floor(y * numTiles);
+        //Sanity check on the Y index.
+        if (yIndex < 0)
+        {
+            yIndex = 0;
+        }
+        else if (yIndex == Infinity)
+        {
+            yIndex = Math.pow(2, zoomLevel) - 1;
+        }
 
         //Compose an object containing the tile indices, and return it.
         return { x: xIndex, y: yIndex, z: zoomLevel};
@@ -84,7 +89,7 @@ MapSphere.Decorations.TiledServiceDecoration = MapSphere.Decorations.Decoration.
 
     getTileURLForIndices: function(z, y, x)
     {
-        return this._baseURL + z + "/" + y + "/" + x + this._tileFilenameExtension;
+        return this._baseURL + z + "/" + x + "/" + y + this._tileFilenameExtension;
     },
 
     requestTile: function(z, y, x, request)
@@ -132,6 +137,20 @@ MapSphere.Decorations.TiledServiceDecoration = MapSphere.Decorations.Decoration.
             //Now, we composite this tile into the texture.
             this._addTileToCompositeTexture(tile);
         }
+
+        tile.request.loadedTiles++;
+
+        //If all of the tiles have been loaded...
+        if(tile.request.loadedTiles == tile.request.totalTiles)
+        {
+            var callbackArgs =
+            {
+                sender: this,
+                image: tile.request.canvas
+            };
+
+            tile.request.callback(callbackArgs);
+        }
     },
 
     refreshContents: function()
@@ -140,25 +159,23 @@ MapSphere.Decorations.TiledServiceDecoration = MapSphere.Decorations.Decoration.
         //this.produceTextureForExtent(); Hold off on doing this for now - I'm not sure we need it.
     },
 
-    produceTextureForExtent: function(extent)
+    produceTextureForRequest: function(request)
     {
-        var zoomLevel = this.getBestZoomLevelForExtent(extent);
+        var zoomLevel = this.getBestZoomLevelForExtent(request.extent);
 
-        var indices = this.getTileIndicesForExtent(visibleExtent, zoomLevel);
+        var indices = this.getTileIndicesForExtent(request.extent, zoomLevel);
 
-        var request = {
-            extent: visibleExtent,
-            zoomLevel: zoomLevel,
-            indices: indices,
-            canvas: null,
-            texture: null
-        };
-
+        request.zoomLevel = zoomLevel;
+        request.indices = indices;
+        request.canvas = null;
+        request.totalTiles = Math.abs((indices.ne.x - indices.sw.x) * (indices .ne.y - indices.sw.y));
+        request.loadedTiles = 0;
+          
         var count = 0;
 
         for (var i = indices.ne.y; i < indices.sw.y; i++) //The indices on the Y axis for the tiles are reversed, 
         {
-            for (var j = indices.sw.x; j < indices.ne.x; j++) {
+            for (var j = indices.sw.x; j < indices.ne.x;j++) {
                 //Request the tile from the service.
                 //i = y index
                 //j = x index
@@ -172,7 +189,7 @@ MapSphere.Decorations.TiledServiceDecoration = MapSphere.Decorations.Decoration.
         var img = tile.img;
 
         var canvas = tile.request.canvas;
-
+        var ctx;
         //If no canvas exists, create it.
         if(canvas == null)
         {
@@ -181,46 +198,55 @@ MapSphere.Decorations.TiledServiceDecoration = MapSphere.Decorations.Decoration.
             canvas.height = 2048;
 
             tile.request.canvas = canvas;
+            ctx = canvas.getContext("2d");
+            ctx.fillStyle = "rgba(0,0,0,0)";
+            ctx.fillRect(0, 0, 2048, 2048);
+        }
+        else
+        {
+            ctx = canvas.getContext("2d");
         }
 
-        var totalExtentX = this._tileSetMaxLon - this._tileSetMinLon;
+        var numTilesX = tile.request.indices.ne.x - tile.request.indices.sw.x;
+        var numTilesY = tile.request.indices.sw.y - tile.request.indices.ne.y;
 
-        var totalExtentY = this._tileSetMaxLat - this._tileSetMinLat;
+        //Fetch the (geographic) bounds of the requested set of tiles...
+        var requestedExtentMaxX = tile.request.extent.getNE().lng();
+        var requestedExtentMinX = tile.request.extent.getSW().lng();
+        var requestedExtentMaxY = tile.request.extent.getNE().lat();
+        var requestedExtentMinY = tile.request.extent.getSW().lat();
+        var requestedExtentX = requestedExtentMaxX - requestedExtentMinX;
+        var requestedExtentY = requestedExtentMaxY - requestedExtentMinY;
 
-        var numtiles = Math.pow(2, tile.z);
+        var practicalMaxX = requestedExtentMaxX;
+        var practicalMaxY = requestedExtentMaxY;
+        var practicalMinX = requestedExtentMinX;
+        var practicalMinY = requestedExtentMinY;
 
-        var tileExtentX = totalExtentX / numtiles;
-        var tileExtentY = totalExtentY / numtiles;
+        if (practicalMaxX > this._tileSetMaxLon) practicalMaxX = this._tileSetMaxLon;
+        if (practicalMinX < this._tileSetMinLon) practicalMinX = this._tileSetMinLon;
+        if (practicalMaxY > this._tileSetMaxLat) practicalMaxY = this._tileSetMaxLat;
+        if (practicalMinY < this._tileSetMinLat) prcaticalMinY = this._tileSetMinLat;
 
-        var fullTextureExtent = tile.request.extent;
+        var tileFractionalWidth = (practicalMaxX - practicalMinX)  / (numTilesX * 360);
+        var tileFractionalHeight = (practicalMaxY - practicalMinY) / (numTilesY * 360);
 
-        var textureMinLon = fullTextureExtent.getSW().lng();
-        var textureMaxLon = fullTextureExtent.getNE().lng();
-        var textureMinLat = fullTextureExtent.getSW().lat();
-        var textureMaxLat = fullTextureExtent.getNE().lat();
+        var fractionX = ((requestedExtentMinX - practicalMinX) / requestedExtentX) + (tile.x * tileFractionalWidth);
+        var fractionY = (((requestedExtentMaxY - practicalMaxY) / requestedExtentY) + (tile.y * tileFractionalHeight));
 
-        var fullTextureExtentX = textureMaxLon - textureMinLon;
-        var fullTextureExtentY = textureMaxLat - textureMinLat;
-
-        var tileLeftLongitude = this._tileSetMinLon + (tile.x) * tileExtentX;
-        var tileTopLatitude = this._tileSetMaxLat - ((tile.y) * tileExtentY);
-
-        var fractionX = (tileLeftLongitude - this._tileSetMinLon) / fullTextureExtentX;
-        var fractionY = (this._tileSetMaxLat - tileTopLatitude) / fullTextureExtentY;
-
-        var ctx = canvas.getContext("2d");
+        if (fractionY < 0)
+        {
+            var q = 0;
+        }
 
         var posX = fractionX * canvas.width;
         var posY = fractionY * canvas.height;
+        var finalWidth = tileFractionalWidth * canvas.width;;
+        var finalHeight = tileFractionalHeight * canvas.height;
 
-        ctx.drawImage(img, posX, posY, img.width, img.height);
+        ctx.drawImage(img, posX, posY, finalWidth, finalHeight);
 
-        if(tile.request.texture == null)
-        {
-            tile.request.texture = new THREE.Texture(canvas);
-        }
-
-        tile.request.texture.needsUpdate = true;
+        //tile.request.texture.needsUpdate = true;
         
     },
 
@@ -239,6 +265,6 @@ MapSphere.Decorations.TiledServiceDecoration = MapSphere.Decorations.Decoration.
 
     handleTextureRequest: function(req)
     {
-
+        this.produceTextureForRequest(req);
     }
 });

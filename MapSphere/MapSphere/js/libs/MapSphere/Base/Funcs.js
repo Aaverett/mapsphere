@@ -46,9 +46,9 @@ MapSphere.stackTextures = function(textures)
     for (var i = 0; i < textures.length; i++)
     {
         if (MapSphere.notNullNotUndef(textures[i])) {
-            if (textures[i].naturalWidth > maxW) maxW = textures[i].naturalWidth;
+            if (textures[i].width > maxW) maxW = textures[i].width;
 
-            if (textures[i].naturalHeight > maxH) maxH = textures[i].naturalHeight
+            if (textures[i].height > maxH) maxH = textures[i].height
         }
     }
 

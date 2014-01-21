@@ -4,6 +4,9 @@
     {
         this._super(options);
 
+        this._tileSetMaxLat = 85.05113;
+        this._tileSetMinLat = -85.05113;
+
 
         var letter = "a";
 
