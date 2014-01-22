@@ -226,34 +226,45 @@ MapSphere.Decorations.TiledServiceDecoration = MapSphere.Decorations.Decoration.
         if (practicalMaxX > this._tileSetMaxLon) practicalMaxX = this._tileSetMaxLon;
         if (practicalMinX < this._tileSetMinLon) practicalMinX = this._tileSetMinLon;
         if (practicalMaxY > this._tileSetMaxLat) practicalMaxY = this._tileSetMaxLat;
-        if (practicalMinY < this._tileSetMinLat) prcaticalMinY = this._tileSetMinLat;
+        if (practicalMinY < this._tileSetMinLat) practicalMinY = this._tileSetMinLat;
 
         var tileFractionalWidth = (practicalMaxX - practicalMinX)  / (numTilesX * 360);
         var tileFractionalHeight = (practicalMaxY - practicalMinY) / (numTilesY * 180);
 
-        var fractionX = ((requestedExtentMinX - practicalMinX) / requestedExtentX) + (tile.x * tileFractionalWidth);
-        var fractionY = (((requestedExtentMaxY - practicalMaxY) / requestedExtentY) + (tile.y * tileFractionalHeight));
-        var fractionY1 = (((requestedExtentMaxY - practicalMaxY) / requestedExtentY) + ((tile.y + 1) * tileFractionalHeight));
+        var fractionX0 = (practicalMinX - requestedExtentMinX) / requestedExtentX;
+        var fractionY0 = (practicalMinY - requestedExtentMinY) / requestedExtentY;
+
+        var fractionX = fractionX0 + (tile.x * tileFractionalWidth);
+        var fractionY = fractionY0 + (tile.y * tileFractionalHeight);
+        var fractionY1 = fractionY0 + ((tile.y + 1) * tileFractionalHeight);
 
         function y2lat(a) { return 180 / Math.PI * (2 * Math.atan(Math.exp(a * Math.PI / 180)) - Math.PI / 2); }
 
         //RIGHT HERE!!
-        var newFractionY = (y2lat(((0.5 - fractionY) / 0.5) * 90) / 90) / 2;
-        var newFractionY1 = (y2lat(((0.5 - fractionY1) / 0.5) * 90) / 90) / 2;
+        var y = ((1 - fractionY) - 0.5) * 2 * 90;
+        var y1 = ((1 - fractionY1) - 0.5) * 2 * 90;
+
+        var lat0 = y2lat(y);
+        var lat1 = y2lat(y1);
+
+        var newFractionY = 1 - (lat0 / 90);
+        var newFractionY1 = 1 - (lat1 / 90);
         var newFracDiff = Math.abs(newFractionY - newFractionY1);
         var newHeight = newFracDiff * canvas.height;
         // /RIGHT HERE!!
+
         var posX = fractionX * canvas.width;
         var posY = newFractionY * canvas.height;
         var finalWidth = tileFractionalWidth * canvas.width;
         var finalHeight = tileFractionalHeight * canvas.height;
 
-        if (tile.y == 3)
+        if (tile.y == 0)
         {
             var q = 0;
         }
 
         ctx.drawImage(img, posX, posY, finalWidth, newHeight);
+        ctx.rect(posX, posY, finalWidth, finalHeight);
 
         //tile.request.texture.needsUpdate = true;
         
