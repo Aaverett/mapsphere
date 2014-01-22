@@ -105,6 +105,7 @@
     <Content Include="js\libs\MapSphere\Math\DetailTreeNode.js" />
     <Content Include="js\libs\MapSphere\Math\Ellipsoid.js" />
     <Content Include="js\libs\ThreeJS\three.min.js" />
+    <Content Include="test.html" />
     <Content Include="Web.config" />
     <Content Include="Web.Debug.config">
       <DependentUpon>Web.config</DependentUpon>

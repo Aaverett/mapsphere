@@ -233,18 +233,27 @@ MapSphere.Decorations.TiledServiceDecoration = MapSphere.Decorations.Decoration.
 
         var fractionX = ((requestedExtentMinX - practicalMinX) / requestedExtentX) + (tile.x * tileFractionalWidth);
         var fractionY = (((requestedExtentMaxY - practicalMaxY) / requestedExtentY) + (tile.y * tileFractionalHeight));
+        var fractionY1 = (((requestedExtentMaxY - practicalMaxY) / requestedExtentY) + ((tile.y + 1) * tileFractionalHeight));
 
-        if (fractionY < 0)
+        function y2lat(a) { return 180 / Math.PI * (2 * Math.atan(Math.exp(a * Math.PI / 180)) - Math.PI / 2); }
+
+        //RIGHT HERE!!
+        var newFractionY = (y2lat(((0.5 - fractionY) / 0.5) * 90) / 90) / 2;
+        var newFractionY1 = (y2lat(((0.5 - fractionY1) / 0.5) * 90) / 90) / 2;
+        var newFracDiff = Math.abs(newFractionY - newFractionY1);
+        var newHeight = newFracDiff * canvas.height;
+        // /RIGHT HERE!!
+        var posX = fractionX * canvas.width;
+        var posY = newFractionY * canvas.height;
+        var finalWidth = tileFractionalWidth * canvas.width;
+        var finalHeight = tileFractionalHeight * canvas.height;
+
+        if (tile.y == 3)
         {
             var q = 0;
         }
 
-        var posX = fractionX * canvas.width;
-        var posY = fractionY * canvas.height;
-        var finalWidth = tileFractionalWidth * canvas.width;
-        var finalHeight = tileFractionalHeight * canvas.height;
-
-        ctx.drawImage(img, posX, posY, finalWidth, finalHeight);
+        ctx.drawImage(img, posX, posY, finalWidth, newHeight);
 
         //tile.request.texture.needsUpdate = true;
         
