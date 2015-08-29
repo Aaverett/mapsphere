@@ -12,7 +12,7 @@ MapSphere.Decorations.TiledServiceDecoration = MapSphere.Decorations.Decoration.
     _tileSetMinLon: -180,
     _baseURL: "",
     _tileFilenameExtension: ".png",
-    _tilesPerExtent: 4,
+    _tilesPerExtent: 2,
 
     _tileLoadQueue: null,
     init: function(options)
@@ -60,6 +60,8 @@ MapSphere.Decorations.TiledServiceDecoration = MapSphere.Decorations.Decoration.
 
         var latExtent = ne.lat() - sw.lat();
         var lonExtent = ne.lng() - sw.lng();
+
+
         
         //There's probably an easier way to do this that involves just computing the proper zoom level, but this should be OK for now.
         for (var i = this._minZoomLevel ; i < this._maxZoomLevel; i++)
@@ -194,13 +196,13 @@ MapSphere.Decorations.TiledServiceDecoration = MapSphere.Decorations.Decoration.
         if(canvas == null)
         {
             canvas = document.createElement("canvas");
-            canvas.width = 2048;
-            canvas.height = 2048;
+            canvas.width = 1024;
+            canvas.height = 1024;
 
             tile.request.canvas = canvas;
             ctx = canvas.getContext("2d");
             ctx.fillStyle = "rgba(0,0,0,0)";
-            ctx.fillRect(0, 0, 2048, 2048);
+            ctx.fillRect(0, 0, 1024, 1024);
         }
         else
         {
@@ -218,56 +220,63 @@ MapSphere.Decorations.TiledServiceDecoration = MapSphere.Decorations.Decoration.
         var requestedExtentX = requestedExtentMaxX - requestedExtentMinX;
         var requestedExtentY = requestedExtentMaxY - requestedExtentMinY;
 
-        var practicalMaxX = requestedExtentMaxX;
-        var practicalMaxY = requestedExtentMaxY;
-        var practicalMinX = requestedExtentMinX;
-        var practicalMinY = requestedExtentMinY;
-
-        if (practicalMaxX > this._tileSetMaxLon) practicalMaxX = this._tileSetMaxLon;
-        if (practicalMinX < this._tileSetMinLon) practicalMinX = this._tileSetMinLon;
-        if (practicalMaxY > this._tileSetMaxLat) practicalMaxY = this._tileSetMaxLat;
-        if (practicalMinY < this._tileSetMinLat) practicalMinY = this._tileSetMinLat;
-
-        var tileFractionalWidth = (practicalMaxX - practicalMinX)  / (numTilesX * 360);
-        var tileFractionalHeight = (practicalMaxY - practicalMinY) / (numTilesY * 180);
-
-        var fractionX0 = (practicalMinX - requestedExtentMinX) / requestedExtentX;
-        var fractionY0 = (practicalMinY - requestedExtentMinY) / requestedExtentY;
-
-        var fractionX = fractionX0 + (tile.x * tileFractionalWidth);
-        var fractionY = fractionY0 + (tile.y * tileFractionalHeight);
-        var fractionY1 = fractionY0 + ((tile.y + 1) * tileFractionalHeight);
-
-        function y2lat(a) { return 180 / Math.PI * (2 * Math.atan(Math.exp(a * Math.PI / 180)) - Math.PI / 2); }
-
-        //RIGHT HERE!!
-        var y = ((1 - fractionY) - 0.5) * 2 * 90;
-        var y1 = ((1 - fractionY1) - 0.5) * 2 * 90;
-
-        var lat0 = y2lat(y);
-        var lat1 = y2lat(y1);
-
-        var newFractionY = 1 - (lat0 / 90);
-        var newFractionY1 = 1 - (lat1 / 90);
-        var newFracDiff = Math.abs(newFractionY - newFractionY1);
-        var newHeight = newFracDiff * canvas.height;
-        // /RIGHT HERE!!
-
-        var posX = fractionX * canvas.width;
-        var posY = newFractionY * canvas.height;
-        var finalWidth = tileFractionalWidth * canvas.width;
-        var finalHeight = tileFractionalHeight * canvas.height;
-
-        if (tile.y == 0)
+        //Now we have to figure out the Y.
+        function webMercToLat(y, zoom)
         {
-            var q = 0;
+            var webMercMaxLat = 85.05113;
+            var webMercMinLat = -85.05113;
+
+            var pow = 1.0 * (y / ((128 / Math.PI) * Math.pow(2, zoom))) - Math.PI;
+
+            var angle = Math.pow(Math.E, pow);
+            var lat = -1 * (2 * Math.atan(angle) - (Math.PI/2)) * (180 / Math.PI);
+
+            return lat;
         }
 
-        ctx.drawImage(img, posX, posY, finalWidth, newHeight);
-        ctx.rect(posX, posY, finalWidth, finalHeight);
+        function webMercToLon(x, zoom)
+        {
+            var lon = (Math.PI / (128 * Math.pow(2, zoom)) * x - Math.PI) * (180 / Math.PI);
 
-        //tile.request.texture.needsUpdate = true;
+            return lon ;
+        }
+
+        //Compute the left and right edges of our tile within our texture.
+        var globalXFrac = tile.x * img.width - 0.5;
+        var globalXFrac1 = (tile.x + 1) * img.width - 0.5;
+        var lon = webMercToLon(globalXFrac, tile.z);
+        var lon1 = webMercToLon(globalXFrac1, tile.z);
+
+        var diffX = lon - requestedExtentMinX;
+        var diffX1 = lon1 - requestedExtentMinX;
+
+        var fractionX = diffX / requestedExtentX;
+        var fractionX1 = diffX1 / requestedExtentX;
+        var posX = fractionX * canvas.width;
+        var posX1 = fractionX1 * canvas.width;
+        var finalWidth = posX1 - posX;
+
         
+        //Compute the Y coordinates of the top and bottom edges of the tile within our texture.
+        var globalYFrac = tile.y * img.height - 0.5;
+        var globalYFrac1 = (tile.y + 1) * img.height + 0.5;
+
+        var lat = webMercToLat(globalYFrac, tile.z);
+        var lat1 = webMercToLat(globalYFrac1, tile.z);
+
+        var diffY = requestedExtentMaxY - lat;
+        var diffY1 = requestedExtentMaxY - lat1;
+
+        var fractionY = diffY / requestedExtentY;
+        var fractionY1 = diffY1 / requestedExtentY;
+
+        var posY = fractionY * canvas.height;
+        var posY1 = fractionY1 * canvas.height;
+
+        var finalHeight = (posY1 - posY);
+              
+        ctx.drawImage(img, posX, posY, finalWidth, finalHeight);
+        ctx.rect(posX, posY, finalWidth, finalHeight);
     },
 
     handlePendingTextureRequests: function()

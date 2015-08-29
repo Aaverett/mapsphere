@@ -132,7 +132,7 @@ MapSphere.Layers.Layer = MapSphere.UIEventHost.extend({
             this._geometryRootNode.enhanceExtent(theta0, thetaPrime, rho0, rhoPrime);
         }
 
-        return this._geometryRootNode.getMesh();        
+        return this._geometryRootNode.getMesh();
     },
     
     addTextureCoordsForVertex: function(uvs, arrayPosition, rho, theta, rho0, theta0, rhoPrime, thetaPrime)

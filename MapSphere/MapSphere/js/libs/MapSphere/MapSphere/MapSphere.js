@@ -219,7 +219,7 @@ MapSphere.MapSphere = MapSphere.UIEventHost.extend({
         this.sunLight = new THREE.PointLight(0xffffff, 3, this.ellipsoid.getEquatorialRadius() * 15);
         this.sunLight.position.set(this.ellipsoid.getEquatorialRadius() * 7, this.ellipsoid.getEquatorialRadius() * -7, 0);
 
-        this.scene.add(this.sunLight);
+        //this.scene.add(this.sunLight);
 
         this.projector = new THREE.Projector();
         this.raycaster = new THREE.Raycaster();
@@ -307,16 +307,14 @@ MapSphere.MapSphere = MapSphere.UIEventHost.extend({
         this._visibleExtent = args.extent;
 
         this.cameraDoneMovingTimer = window.setTimeout(this.handleCameraDoneMovingTimeout.bind(this), this._cameraDoneMovingWait);
+    },
 
+    handleCameraDoneMovingTimeout: function (args) {
         //Request that each layer refresh its geometry.
         for (var i = 0; i < this.layers.length; i++) {
             this.layers[i].setVisibleExtent(this._visibleExtent);
             this.layers[i].refreshGeometry();
         }
-    },
-
-    handleCameraDoneMovingTimeout: function (args) {
-        
     },
 
     resize: function (width, height) {
